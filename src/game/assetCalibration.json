@@ -1,0 +1,712 @@
+{
+ "meteor": {
+  "sheetW": 1774,
+  "sheetH": 887,
+  "cols": 6,
+  "rows": 5,
+  "artAngleDeg": 21.44,
+  "frames": [
+   {
+    "i": 0,
+    "rect": {
+     "x": 0,
+     "y": 0,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 137,
+     "y": 70,
+     "w": 95,
+     "h": 86
+    },
+    "head": {
+     "x": 196.2,
+     "y": 127.4
+    },
+    "headRadius": 24.5,
+    "artAngleDeg": 65.8,
+    "rockPixels": 1287
+   },
+   {
+    "i": 1,
+    "rect": {
+     "x": 296,
+     "y": 0,
+     "w": 295,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 116,
+     "y": 64,
+     "w": 116,
+     "h": 92
+    },
+    "head": {
+     "x": 195.9,
+     "y": 127.6
+    },
+    "headRadius": 24.1,
+    "artAngleDeg": 57.6,
+    "rockPixels": 1277
+   },
+   {
+    "i": 2,
+    "rect": {
+     "x": 591,
+     "y": 0,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 108,
+     "y": 56,
+     "w": 123,
+     "h": 100
+    },
+    "head": {
+     "x": 195.3,
+     "y": 126.9
+    },
+    "headRadius": 24.4,
+    "artAngleDeg": 55.3,
+    "rockPixels": 1273
+   },
+   {
+    "i": 3,
+    "rect": {
+     "x": 887,
+     "y": 0,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 98,
+     "y": 57,
+     "w": 137,
+     "h": 98
+    },
+    "head": {
+     "x": 197.8,
+     "y": 126.9
+    },
+    "headRadius": 24.6,
+    "artAngleDeg": 49.5,
+    "rockPixels": 1348
+   },
+   {
+    "i": 4,
+    "rect": {
+     "x": 1183,
+     "y": 0,
+     "w": 295,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 91,
+     "y": 55,
+     "w": 148,
+     "h": 100
+    },
+    "head": {
+     "x": 202.4,
+     "y": 126.5
+    },
+    "headRadius": 25.3,
+    "artAngleDeg": 44.2,
+    "rockPixels": 1269
+   },
+   {
+    "i": 5,
+    "rect": {
+     "x": 1478,
+     "y": 0,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 91,
+     "y": 53,
+     "w": 155,
+     "h": 101
+    },
+    "head": {
+     "x": 208.6,
+     "y": 125.8
+    },
+    "headRadius": 25.2,
+    "artAngleDeg": 41.3,
+    "rockPixels": 1316
+   },
+   {
+    "i": 6,
+    "rect": {
+     "x": 0,
+     "y": 177,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 92,
+     "y": 55,
+     "w": 157,
+     "h": 98
+    },
+    "head": {
+     "x": 212.6,
+     "y": 124.1
+    },
+    "headRadius": 24.8,
+    "artAngleDeg": 40.4,
+    "rockPixels": 1287
+   },
+   {
+    "i": 7,
+    "rect": {
+     "x": 296,
+     "y": 177,
+     "w": 295,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 84,
+     "y": 51,
+     "w": 169,
+     "h": 102
+    },
+    "head": {
+     "x": 217.2,
+     "y": 124.2
+    },
+    "headRadius": 24.4,
+    "artAngleDeg": 35.4,
+    "rockPixels": 1270
+   },
+   {
+    "i": 8,
+    "rect": {
+     "x": 591,
+     "y": 177,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 75,
+     "y": 48,
+     "w": 183,
+     "h": 105
+    },
+    "head": {
+     "x": 220.2,
+     "y": 124.3
+    },
+    "headRadius": 25.3,
+    "artAngleDeg": 35.5,
+    "rockPixels": 1313
+   },
+   {
+    "i": 9,
+    "rect": {
+     "x": 887,
+     "y": 177,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 56,
+     "y": 45,
+     "w": 203,
+     "h": 109
+    },
+    "head": {
+     "x": 221.2,
+     "y": 124.7
+    },
+    "headRadius": 25.8,
+    "artAngleDeg": 32.7,
+    "rockPixels": 1409
+   },
+   {
+    "i": 10,
+    "rect": {
+     "x": 1183,
+     "y": 177,
+     "w": 295,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 38,
+     "y": 36,
+     "w": 223,
+     "h": 119
+    },
+    "head": {
+     "x": 222.6,
+     "y": 125
+    },
+    "headRadius": 25.5,
+    "artAngleDeg": 29.6,
+    "rockPixels": 1347
+   },
+   {
+    "i": 11,
+    "rect": {
+     "x": 1478,
+     "y": 177,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 40,
+     "y": 39,
+     "w": 222,
+     "h": 116
+    },
+    "head": {
+     "x": 224.1,
+     "y": 125.5
+    },
+    "headRadius": 25.8,
+    "artAngleDeg": 30,
+    "rockPixels": 1341
+   },
+   {
+    "i": 12,
+    "rect": {
+     "x": 0,
+     "y": 355,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 27,
+     "y": 31,
+     "w": 237,
+     "h": 122
+    },
+    "head": {
+     "x": 224.9,
+     "y": 123.4
+    },
+    "headRadius": 26.2,
+    "artAngleDeg": 30.2,
+    "rockPixels": 1405
+   },
+   {
+    "i": 13,
+    "rect": {
+     "x": 296,
+     "y": 355,
+     "w": 295,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 21,
+     "y": 28,
+     "w": 245,
+     "h": 126
+    },
+    "head": {
+     "x": 227,
+     "y": 123.4
+    },
+    "headRadius": 26.2,
+    "artAngleDeg": 28.3,
+    "rockPixels": 1406
+   },
+   {
+    "i": 14,
+    "rect": {
+     "x": 591,
+     "y": 355,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 17,
+     "y": 26,
+     "w": 251,
+     "h": 130
+    },
+    "head": {
+     "x": 229,
+     "y": 124.4
+    },
+    "headRadius": 27.3,
+    "artAngleDeg": 28.7,
+    "rockPixels": 1394
+   },
+   {
+    "i": 15,
+    "rect": {
+     "x": 887,
+     "y": 355,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 14,
+     "y": 23,
+     "w": 255,
+     "h": 133
+    },
+    "head": {
+     "x": 229.7,
+     "y": 124
+    },
+    "headRadius": 26.4,
+    "artAngleDeg": 28.5,
+    "rockPixels": 1446
+   },
+   {
+    "i": 16,
+    "rect": {
+     "x": 1183,
+     "y": 355,
+     "w": 295,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 10,
+     "y": 18,
+     "w": 259,
+     "h": 139
+    },
+    "head": {
+     "x": 228.5,
+     "y": 124.8
+    },
+    "headRadius": 27.6,
+    "artAngleDeg": 29,
+    "rockPixels": 1485
+   },
+   {
+    "i": 17,
+    "rect": {
+     "x": 1478,
+     "y": 355,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 9,
+     "y": 18,
+     "w": 261,
+     "h": 140
+    },
+    "head": {
+     "x": 229,
+     "y": 124.9
+    },
+    "headRadius": 28.7,
+    "artAngleDeg": 28.5,
+    "rockPixels": 1544
+   },
+   {
+    "i": 18,
+    "rect": {
+     "x": 0,
+     "y": 532,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 6,
+     "y": 17,
+     "w": 266,
+     "h": 140
+    },
+    "head": {
+     "x": 230,
+     "y": 125
+    },
+    "headRadius": 28.1,
+    "artAngleDeg": 28.8,
+    "rockPixels": 1505
+   },
+   {
+    "i": 19,
+    "rect": {
+     "x": 296,
+     "y": 532,
+     "w": 295,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 3,
+     "y": 17,
+     "w": 267,
+     "h": 140
+    },
+    "head": {
+     "x": 231,
+     "y": 125.8
+    },
+    "headRadius": 26.9,
+    "artAngleDeg": 28.4,
+    "rockPixels": 1439
+   },
+   {
+    "i": 20,
+    "rect": {
+     "x": 591,
+     "y": 532,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 3,
+     "y": 16,
+     "w": 269,
+     "h": 141
+    },
+    "head": {
+     "x": 231.5,
+     "y": 125.7
+    },
+    "headRadius": 27.3,
+    "artAngleDeg": 28.5,
+    "rockPixels": 1398
+   },
+   {
+    "i": 21,
+    "rect": {
+     "x": 887,
+     "y": 532,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 0,
+     "y": 16,
+     "w": 296,
+     "h": 140
+    },
+    "head": {
+     "x": 231.1,
+     "y": 125.3
+    },
+    "headRadius": 26.7,
+    "artAngleDeg": 26.8,
+    "rockPixels": 1373
+   },
+   {
+    "i": 22,
+    "rect": {
+     "x": 1183,
+     "y": 532,
+     "w": 295,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 0,
+     "y": 16,
+     "w": 268,
+     "h": 140
+    },
+    "head": {
+     "x": 230.4,
+     "y": 126
+    },
+    "headRadius": 25.8,
+    "artAngleDeg": 26.6,
+    "rockPixels": 1365
+   },
+   {
+    "i": 23,
+    "rect": {
+     "x": 1478,
+     "y": 532,
+     "w": 296,
+     "h": 178
+    },
+    "alphaBounds": {
+     "x": 0,
+     "y": 15,
+     "w": 270,
+     "h": 141
+    },
+    "head": {
+     "x": 229.8,
+     "y": 125.4
+    },
+    "headRadius": 27,
+    "artAngleDeg": 26.3,
+    "rockPixels": 1423
+   },
+   {
+    "i": 24,
+    "rect": {
+     "x": 0,
+     "y": 710,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 11,
+     "y": 19,
+     "w": 260,
+     "h": 138
+    },
+    "head": {
+     "x": 231.9,
+     "y": 127
+    },
+    "headRadius": 25.8,
+    "artAngleDeg": 29.4,
+    "rockPixels": 1290
+   },
+   {
+    "i": 25,
+    "rect": {
+     "x": 296,
+     "y": 710,
+     "w": 295,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 13,
+     "y": 18,
+     "w": 256,
+     "h": 139
+    },
+    "head": {
+     "x": 231.4,
+     "y": 127.3
+    },
+    "headRadius": 25.3,
+    "artAngleDeg": 29.4,
+    "rockPixels": 1278
+   },
+   {
+    "i": 26,
+    "rect": {
+     "x": 591,
+     "y": 710,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 20,
+     "y": 23,
+     "w": 249,
+     "h": 133
+    },
+    "head": {
+     "x": 232.2,
+     "y": 128.9
+    },
+    "headRadius": 24.5,
+    "artAngleDeg": 31.1,
+    "rockPixels": 1217
+   },
+   {
+    "i": 27,
+    "rect": {
+     "x": 887,
+     "y": 710,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 41,
+     "y": 27,
+     "w": 227,
+     "h": 129
+    },
+    "head": {
+     "x": 232.1,
+     "y": 129.1
+    },
+    "headRadius": 23,
+    "artAngleDeg": 31.7,
+    "rockPixels": 1139
+   },
+   {
+    "i": 28,
+    "rect": {
+     "x": 1183,
+     "y": 710,
+     "w": 295,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 30,
+     "y": 31,
+     "w": 236,
+     "h": 125
+    },
+    "head": {
+     "x": 231.2,
+     "y": 129
+    },
+    "headRadius": 23,
+    "artAngleDeg": 31.6,
+    "rockPixels": 1140
+   },
+   {
+    "i": 29,
+    "rect": {
+     "x": 1478,
+     "y": 710,
+     "w": 296,
+     "h": 177
+    },
+    "alphaBounds": {
+     "x": 59,
+     "y": 41,
+     "w": 208,
+     "h": 114
+    },
+    "head": {
+     "x": 233.4,
+     "y": 129.7
+    },
+    "headRadius": 22.4,
+    "artAngleDeg": 32.7,
+    "rockPixels": 1089
+   }
+  ]
+ },
+ "barrel": {
+  "w": 2172,
+  "h": 724,
+  "alphaBounds": {
+   "x": 88,
+   "y": 100,
+   "w": 1996,
+   "h": 534
+  },
+  "muzzle": {
+   "x": 2083,
+   "y": 384
+  },
+  "muzzleBoreHalfHeight": 124,
+  "rearAxisY": 366
+ },
+ "base": {
+  "w": 1254,
+  "h": 1254,
+  "alphaBounds": {
+   "x": 26,
+   "y": 27,
+   "w": 1163,
+   "h": 1197
+  },
+  "core": {
+   "x": 609.6,
+   "y": 600.6
+  }
+ },
+ "frame": {
+  "w": 1672,
+  "h": 941,
+  "inner": {
+   "left": 65,
+   "right": 1606,
+   "top": 55,
+   "bottom": 884
+  },
+  "centerAlpha": 0
+ }
+}

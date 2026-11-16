@@ -1,0 +1,234 @@
+/* ============================================================
+   Named keyframes. Ambient ones only animate transform / opacity
+   (cheap, compositor-only). Effect ones are used by pooled DOM
+   elements spawned by VFX.ts at real world coordinates.
+   ============================================================ */
+
+/* ---------- ambient ---------- */
+@keyframes nebulaBreathe {
+  0%, 100% { opacity: 0.1; transform: translate3d(0, 0, 0) scale(1); }
+  50% { opacity: 0.18; transform: translate3d(var(--dx, 6px), var(--dy, -4px), 0) scale(1.01); }
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: var(--o, 0.35); transform: scale(1); }
+  45% { opacity: var(--o, 0.35); }
+  55% { opacity: 0.95; transform: scale(1.5); }
+  65% { opacity: var(--o, 0.35); transform: scale(1); }
+}
+
+/* slowParallax: pointer parallax is a JS-eased transform on #parallax-glow (SceneRenderer.update) */
+
+@keyframes arcEnergyFlow {
+  from { stroke-dashoffset: 1000; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes frameCurrent {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.28; }
+}
+
+@keyframes turretIdle {
+  0%, 100% { opacity: 0.55; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes indicatorBlink {
+  0%, 70%, 100% { opacity: 0.25; }
+  80% { opacity: 1; }
+}
+
+@keyframes meteorPlasmaFlicker {
+  0% { opacity: 0.75; transform: scale(0.97); }
+  40% { opacity: 1; transform: scale(1.03); }
+  70% { opacity: 0.85; transform: scale(0.99); }
+  100% { opacity: 0.95; transform: scale(1.02); }
+}
+
+@keyframes buttonSheen {
+  0% { transform: translateX(-120%); opacity: 1; }
+  100% { transform: translateX(120%); opacity: 1; }
+}
+
+/* ---------- turret ---------- */
+@keyframes recoil {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-9px); }
+  45% { transform: translateX(-9px); }
+  75% { transform: translateX(1.5px); }
+  100% { transform: translateX(0); }
+}
+
+#barrel-recoil.recoil { animation: recoil 0.28s cubic-bezier(0.2, 0.7, 0.3, 1); }
+
+@keyframes chargeGlow {
+  from { opacity: 0.7; transform: scale(1); }
+  to { opacity: 1; transform: scale(1.5); filter: brightness(1.6); }
+}
+
+@keyframes chargeBuzz {
+  0% { transform: translate(0.6px, 0); }
+  50% { transform: translate(-0.6px, 0.4px); }
+  100% { transform: translate(0.4px, -0.4px); }
+}
+
+/* ---------- answer feedback ---------- */
+@keyframes wrongShake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-7px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes wrongOutline {
+  0%, 60% { background: linear-gradient(180deg, #ff8a5a, #e0441c 50%, #b8300f); }
+  100% { background: linear-gradient(180deg, #ffc04a 0%, #ffb12d 30%, #ff8a00 70%, #ff7300 100%); }
+}
+
+@keyframes ledLost {
+  0% { transform: scale(1.6); background: #ffcf7a; box-shadow: 0 0 18px #ff8a00; }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmerFade {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(0.9); }
+  12% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+  25% { transform: translate(-50%, -55%) scale(1); }
+  75% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -110%) scale(1); }
+}
+
+/* ---------- pooled DOM effects (VFX.ts) ---------- */
+.fx-ring,
+.fx-plasma,
+.fx-smokeDom,
+.fx-debris,
+.fx-muzzle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.fx-muzzle {
+  width: 90px;
+  height: 90px;
+  margin: -45px 0 0 -45px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 252, 230, 0.95) 0%, rgba(255, 190, 80, 0.55) 30%, rgba(255, 100, 0, 0) 70%);
+  mix-blend-mode: screen;
+}
+
+.fx-muzzle.play { animation: muzzleFlash 0.13s ease-out forwards; }
+
+@keyframes muzzleFlash {
+  0% { opacity: 1; transform: rotate(var(--rot)) scale(0.4, 0.3); }
+  40% { opacity: 1; transform: rotate(var(--rot)) scale(1.15, 0.7); }
+  100% { opacity: 0; transform: rotate(var(--rot)) scale(1.4, 0.5); }
+}
+
+.fx-ring {
+  width: 260px;
+  height: 260px;
+  margin: -130px 0 0 -130px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 225, 170, 0.85);
+  box-shadow: 0 0 18px rgba(255, 150, 40, 0.6), inset 0 0 14px rgba(255, 150, 40, 0.45);
+  mix-blend-mode: screen;
+}
+
+.fx-ring.play { animation: impactRing 0.42s cubic-bezier(0.15, 0.6, 0.3, 1) forwards; }
+
+@keyframes impactRing {
+  0% { opacity: 0.7; transform: scale(0.05); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+.fx-plasma {
+  width: 170px;
+  height: 170px;
+  margin: -85px 0 0 -85px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 235, 0.9) 0%, rgba(255, 210, 90, 0.7) 22%, rgba(255, 110, 20, 0.45) 48%, rgba(200, 30, 60, 0) 72%);
+  mix-blend-mode: screen;
+}
+
+.fx-plasma.play { animation: plasmaExpand 0.36s ease-out 0.06s forwards; }
+
+@keyframes plasmaExpand {
+  0% { opacity: 0; transform: scale(0.18); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1); }
+}
+
+.fx-smokeDom {
+  width: 110px;
+  height: 110px;
+  margin: -55px 0 0 -55px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(72, 64, 98, 0.55) 0%, rgba(50, 44, 76, 0.32) 45%, rgba(30, 26, 50, 0) 70%);
+}
+
+.fx-smokeDom.play { animation: smokeBillow var(--d, 1.5s) ease-out 0.2s forwards; }
+
+@keyframes smokeBillow {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.25); }
+  20% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1); }
+}
+
+.fx-debris {
+  width: 9px;
+  height: 6px;
+  margin: -3px 0 0 -4px;
+  border-radius: 2px;
+  background: #ffcf7a;
+  box-shadow: 0 0 8px 2px rgba(255, 140, 30, 0.85);
+}
+
+.fx-debris.play { animation: debrisFly 0.75s cubic-bezier(0.1, 0.7, 0.4, 1) forwards; }
+
+@keyframes debrisFly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--spin)) scale(0.4); }
+}
+
+#game-stage.shield-hit #playfield::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 49.5%, rgba(255, 130, 30, 0) 30%, rgba(255, 110, 20, 0.16) 100%);
+  animation: shieldVignette 0.7s ease-out forwards;
+}
+
+@keyframes shieldVignette {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------- reduced motion: keep learning feedback, drop ambience/shake ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .star.tw,
+  .pstar,
+  .neb,
+  #arc-flow .glint,
+  #frame-glow,
+  .core-glow,
+  .ring-glow,
+  .indicator,
+  #meteor-aura::before,
+  .rot-icon {
+    animation: none !important;
+  }
+  #arc-flow { display: none; }
+  .opt.wrong { animation: none; }
+  .opt:not(:disabled):hover { transform: none; }
+  .fx-debris.play,
+  .fx-smokeDom.play { animation: none; }
+  .float-text { animation-duration: 1.7s; }
+}

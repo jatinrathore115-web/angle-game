@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#070b1c" />
+    <meta name="description" content="Angle Defense: Meteor Intercept — a Grade 9 lines-and-angles defense game." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%2212%22 fill=%22%23ff8a00%22/%3E%3Ccircle cx=%2216%22 cy=%2216%22 r=%225%22 fill=%22%23ffe9b0%22/%3E%3C/svg%3E" />
+    <title>Angle Defense: Meteor Intercept</title>
+    <script>
+      // This source page only runs under the Vite dev server (it compiles src/main.ts).
+      // Opened any other way (double-click, VS Code Live Server, any static server) the
+      // TypeScript entry fails to load, so switch to the prebuilt game in dist/.
+      window.addEventListener('error', function (e) {
+        var t = e.target;
+        if (!t || t.tagName !== 'SCRIPT' || !/\/src\/main\.ts$/.test(t.src || '')) return;
+        var built = new URL('dist/index.html', location.href).href;
+        function showHelp() {
+          var msg = document.getElementById('load-text');
+          if (msg) msg.innerHTML = 'The game is not built yet.<br>Run <b>npm install</b> and <b>npm run build</b>, then reload — or run <b>npm run dev</b> and open http://localhost:5173.';
+          var card = document.getElementById('title-card');
+          if (card) card.className += ' error';
+        }
+        if (location.protocol === 'file:') { location.replace(built); return; }
+        fetch(built, { method: 'HEAD' })
+          .then(function (r) { if (r.ok) location.replace(built); else showHelp(); })
+          .catch(showHelp);
+      }, true);
+    </script>
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/game.css" />
+    <link rel="stylesheet" href="/src/styles/fx.css" />
+  </head>
+  <body>
+    <main id="viewport">
+      <div id="game-stage" class="in-title" role="application" aria-label="Angle Defense: Meteor Intercept">
+        <!-- 1. supplied background plate (src set after preload) -->
+        <img id="bg" class="layer art" alt="" draggable="false" />
+        <!-- 2-4. live ambience: stars, nebula breathing, glints on the painted orange streak -->
+        <div id="stars" class="layer" aria-hidden="true"></div>
+        <div id="nebula" class="layer" aria-hidden="true"></div>
+        <svg id="arc-flow" class="layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"></svg>
+
+        <!-- 5-9. playfield (the only thing camera-shake moves) -->
+        <div id="playfield" class="layer">
+          <canvas id="world-canvas" class="layer" aria-hidden="true"></canvas>
+          <div id="meteor-aura" aria-hidden="true"></div>
+          <div id="turret" aria-hidden="true">
+            <div id="turret-base-wrap">
+              <div class="core-glow"></div>
+              <div class="ring-glow"></div>
+              <div class="indicator i1"></div>
+              <div class="indicator i2"></div>
+              <div class="indicator i3"></div>
+            </div>
+            <div id="barrel-mount"><div id="barrel-recoil"></div></div>
+          </div>
+          <canvas id="fx-canvas" class="layer" aria-hidden="true"></canvas>
+          <div id="fx-dom" class="layer" aria-hidden="true"></div>
+          <div id="float-layer" class="layer" aria-live="polite"></div>
+        </div>
+
+        <div id="parallax-glow" class="layer" aria-hidden="true"></div>
+
+        <!-- 10. supplied frame overlay + emissive breathing copy -->
+        <img id="frame" class="layer art" alt="" draggable="false" />
+        <img id="frame-glow" class="layer art" alt="" draggable="false" />
+
+        <!-- 11. minimal HUD -->
+        <div id="hud">
+          <div id="hud-level-wrap" class="hud-chip" aria-label="Level">
+            <span id="hud-level">L1</span><span id="hud-progress">1/12</span>
+            <span id="hud-lives" aria-label="3 shields left"><i class="led on"></i><i class="led on"></i><i class="led on"></i></span>
+          </div>
+          <div id="hud-score" class="hud-chip" aria-live="polite">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>
+            <span id="hud-score-value">0</span>
+          </div>
+          <button id="btn-hint" class="corner-btn" aria-label="Show a hint (H)" disabled><span aria-hidden="true">?</span> Hint</button>
+          <div id="corner-controls">
+            <button id="btn-sound" class="icon-btn" aria-label="Mute sound" aria-pressed="false" title="Sound (M)">
+              <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
+              <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 9.5l5 5M21.5 9.5l-5 5"/></svg>
+            </button>
+            <button id="btn-pause" class="icon-btn" aria-label="Pause (P)" title="Pause (P)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            </button>
+            <button id="btn-restart" class="icon-btn" aria-label="Restart mission" title="Restart">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path class="w" d="M5 12a7 7 0 1 0 2.1-5"/><path d="M4 4v5h5z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- the four answer buttons -->
+        <div id="options" role="group" aria-label="Choose the missing angle">
+          <button class="opt" data-key="1"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">1</span><span class="opt-label">76°</span></button>
+          <button class="opt" data-key="2"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">2</span><span class="opt-label">104°</span></button>
+          <button class="opt" data-key="3"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">3</span><span class="opt-label">114°</span></button>
+          <button class="opt" data-key="4"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">4</span><span class="opt-label">80°</span></button>
+        </div>
+
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+        <!-- title / loading -->
+        <div id="title-overlay" class="overlay show" aria-hidden="false">
+          <div id="title-card" class="card">
+            <div class="eyebrow">ANGLE DEFENSE</div>
+            <h1>METEOR INTERCEPT</h1>
+            <p class="tag">Choose the right angle. The cannon turns by exactly that much.</p>
+            <div id="load-track"><div id="load-bar"></div></div>
+            <p id="load-text">Loading assets… 0%</p>
+            <button id="btn-play" class="cta" disabled>PLAY MISSION</button>
+            <fieldset class="seg" aria-label="Difficulty">
+              <label><input type="radio" name="difficulty-title" data-setting="difficulty" value="normal" checked /><span>Normal</span></label>
+              <label><input type="radio" name="difficulty-title" data-setting="difficulty" value="calm" /><span>Calm · no timer</span></label>
+            </fieldset>
+            <p class="keys">Keys <kbd>1</kbd>–<kbd>4</kbd> answer · <kbd>H</kbd> hint · <kbd>P</kbd> pause · <kbd>M</kbd> mute</p>
+          </div>
+        </div>
+
+        <!-- pause / settings -->
+        <div id="pause-overlay" class="overlay" aria-hidden="true" inert>
+          <div class="card" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+            <h2 id="pause-title">PAUSED</h2>
+            <label class="row">Volume <input id="vol" type="range" min="0" max="100" value="62" aria-label="Volume" /></label>
+            <label class="row check"><input id="set-mute" type="checkbox" /> Mute all sound</label>
+            <div class="row">Mode
+              <fieldset class="seg" aria-label="Difficulty">
+                <label><input type="radio" name="difficulty-pause" data-setting="difficulty" value="normal" /><span>Normal</span></label>
+                <label><input type="radio" name="difficulty-pause" data-setting="difficulty" value="calm" /><span>Calm</span></label>
+              </fieldset>
+            </div>
+            <div class="row">Quality
+              <fieldset class="seg" aria-label="Visual quality">
+                <label><input type="radio" name="quality" data-setting="quality" value="high" /><span>High</span></label>
+                <label><input type="radio" name="quality" data-setting="quality" value="medium" /><span>Med</span></label>
+                <label><input type="radio" name="quality" data-setting="quality" value="low" /><span>Low</span></label>
+              </fieldset>
+            </div>
+            <div class="btn-row">
+              <button id="btn-resume" class="cta">RESUME</button>
+              <button id="btn-pause-restart" class="ghost">RESTART</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- win / lose -->
+        <div id="end-overlay" class="overlay" aria-hidden="true" inert>
+          <div id="end-card" class="card" role="dialog" aria-modal="true" aria-labelledby="end-title">
+            <h2 id="end-title">MISSION COMPLETE</h2>
+            <p id="end-sub"></p>
+            <div id="end-stats"></div>
+            <div class="btn-row">
+              <button id="btn-retry" class="cta">RETRY MISSION</button>
+              <button id="btn-end-sound" class="ghost">SOUND: ON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="rotate-overlay" aria-live="polite">
+        <div class="rot-icon" aria-hidden="true"></div>
+        <p>Rotate your device</p>
+        <small>Angle Defense plays in landscape.</small>
+      </div>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
