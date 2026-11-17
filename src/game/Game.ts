@@ -440,9 +440,46 @@ export class Game {
     if (this.meteor) this.meteor.stopAt = d === 'calm' ? Math.max(0.5, this.meteor.progress) : 1;
   }
 
-  private setQuality(q: Quality): void {
+  // ---------------------------------------------------------------- adaptive quality
+  private perfTime = 0;
+  private perfFrames = 0;
+  private perfCooldown = 1.5;
+  private lite = false;
+  private fxWasBusy = true;
+
+  /**
+   * Measures the real frame rate. If it stays below 40 fps, step down — first "lite"
+   * rendering (no blend modes / animated blur / glow overlays), then quality high -> medium
+   * -> low — so slow phones and tablets stay smooth. Never steps back up (no oscillation)
+   * and these automatic steps are not saved as the player's setting.
+   */
+  private monitorPerf(dt: number): void {
+    if (this.hidden || this.paused || dt <= 0 || dt > 0.5) return; // ignore tab restores
+    this.perfTime += dt;
+    this.perfFrames++;
+    this.perfCooldown -= dt;
+    if (this.perfTime < 1.5) return;
+    const fps = this.perfFrames / this.perfTime;
+    this.perfTime = this.perfFrames = 0;
+    if (this.perfCooldown > 0 || fps >= 40) return;
+    this.perfCooldown = 1.5;
+    if (!this.lite) {
+      this.lite = true;
+      this.stage.classList.add('lite');
+    } else if (this.settings.quality !== 'low') {
+      this.setQuality(this.settings.quality === 'high' ? 'medium' : 'low', false);
+      this.ui.setQuality(this.settings.quality);
+    }
+  }
+
+  /** Current adaptive state (QA / debugging). */
+  get perfState(): { lite: boolean; quality: Quality } {
+    return { lite: this.lite, quality: this.settings.quality };
+  }
+
+  private setQuality(q: Quality, persist = true): void {
     this.settings.quality = q;
-    this.saveSettings();
+    if (persist) this.saveSettings();
     this.vfx.quality = q;
     this.rs.dprCap = q === 'high' ? 2 : q === 'medium' ? 1.5 : 1;
     this.rs.layout();
@@ -543,7 +580,10 @@ export class Game {
     let dt = (ts - this.last) / 1000;
     this.last = ts;
     if (!(dt > 0)) dt = 0;
-    dt = Math.min(dt, 1 / 20) * this.timeScale; // clamp after tab restore / hitches
+    this.monitorPerf(dt);
+    // Clamp only real hitches (tab restore etc.). 1/10 s keeps game time real-time down to
+    // 10 fps, so slow phones never fall into slow motion; collisions are swept so big steps are safe.
+    dt = Math.min(dt, 1 / 10) * this.timeScale;
     if (this.hidden) return;
     if (!this.paused) {
       let gdt = dt;
@@ -640,7 +680,11 @@ export class Game {
   private render(): void {
     const w = this.worldCtx, f = this.fxCtx;
     this.rs.clear(w);
-    this.rs.clear(f);
+    // The FX canvas is usually empty: only clear/redraw it while something is on it
+    // (plus one extra frame to wipe the last particles). Saves a full-screen fill per frame.
+    const fxBusy = !!this.projectile || this.vfx.busy;
+    if (fxBusy || this.fxWasBusy) this.rs.clear(f);
+    this.fxWasBusy = fxBusy;
     // stars go first into the world canvas: no extra full-screen layer to composite
     this.scene.render(this.reduced);
     this.overlay.draw(w);

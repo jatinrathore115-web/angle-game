@@ -76,6 +76,14 @@ export class VFX {
     return this.particles.filter((p) => p.active).length;
   }
 
+  /** True while anything is drawn on the FX canvas (lets the game skip clearing it when idle). */
+  get busy(): boolean {
+    return (
+      this.rings.length > 0 || this.balls.length > 0 || this.flashes.length > 0 ||
+      this.particles.some((p) => p.active) || this.smoke.some((s) => s.active)
+    );
+  }
+
   // ---------------------------------------------------------------- sprites
   private buildSprites(): void {
     const r = mulberry32(42);

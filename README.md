@@ -67,3 +67,19 @@ Styles are in `src/styles/`. Every named keyframe the effects use is in `fx.css`
 - **Portrait phones and tablets:** the game rotates itself to fill the screen, so it's playable immediately, even with rotation lock on. A desktop window in portrait just letterboxes.
 - **Touch:** hover effects apply only on devices with a real hover, the pressed state works on iOS, and double-tap zoom, pinch, scroll and long-press are blocked.
 - **QA:** `node scripts/qa-devices.mjs <outDir> [url]` runs 16 devices (phones, tablets, laptops, desktops, ultrawide) with touch emulation. It taps through a round on each and writes a contact sheet.
+
+## Playing on a phone or tablet
+
+A phone can't open files on your PC, so it has to load the game over Wi-Fi from your computer:
+
+1. On the PC, run `npm run dev`. Vite prints a **Network** address, for example `http://10.157.126.30:5173/`.
+2. Connect the phone to the **same Wi-Fi** and open that Network address in Safari or Chrome.
+3. Keep the terminal open while playing.
+
+If the phone can't connect, check two things:
+- **Firewall:** Windows Firewall must allow Node.js on this network.
+- **Wi-Fi isolation:** some office and guest networks block devices from reaching each other. In that case, use a phone hotspot or home Wi-Fi, or host the `dist/` folder on any static web host.
+
+**Performance on mobile:** the game measures its own frame rate. On slow devices it switches to lighter rendering (no blend modes, animated blurs or glow overlays) and lowers quality step by step. Game time also stays real-time down to 10 fps, so slow devices never run in slow motion.
+
+**Safari check:** `node scripts/qa-webkit.mjs <outDir> [url]` runs Playwright's WebKit (Safari engine) with real iPhone and iPad profiles. Install it first with `npx playwright-core install webkit`.

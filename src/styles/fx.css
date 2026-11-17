@@ -299,3 +299,27 @@
   #title-card.ready .start-ring { animation: none; }
   #title-overlay:not(.show) { transform: none; }
 }
+
+/* ---------- lite rendering (auto-enabled when the measured frame rate is low) ----------
+   Drops the effects that are expensive on mobile GPUs/Safari: blend modes, animated SVG blur,
+   full-screen glow overlays and filter animations. The art, layout and gameplay are unchanged. */
+#game-stage.lite #nebula,
+#game-stage.lite #bg-flares .flare,
+#game-stage.lite #meteor-aura,
+#game-stage.lite .fx-muzzle,
+#game-stage.lite .fx-ring,
+#game-stage.lite .fx-plasma { mix-blend-mode: normal; }
+
+#game-stage.lite #arc-flow,
+#game-stage.lite #frame-glow,
+#game-stage.lite #dust,
+#game-stage.lite .neb-current { display: none; }
+
+#game-stage.lite #bg-drift { animation: none; transform: scale(1.045); }
+#game-stage.lite #title-card.ready .start-pulse { animation: startPulseLite 1.6s ease-in-out infinite; }
+#game-stage.lite .charging .core-glow { animation: none; opacity: 1; }
+
+@keyframes startPulseLite {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.07); }
+}

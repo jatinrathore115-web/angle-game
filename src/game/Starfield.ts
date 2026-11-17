@@ -126,12 +126,20 @@ export class Starfield {
     for (const L of this.layers) {
       const ox = -this.px * L.parallax, oy = -this.py * L.parallax;
       if (L.tiled && L.tile) {
-        // slide the pre-painted tile; 4 placements cover the wrap seam
+        // Slide the pre-painted tile. Only the exact visible pieces are copied (4 sub-rects
+        // that together cover the screen once), with plain blending: the tile sits over a
+        // transparent canvas, so 'lighter' adds nothing visually but costs a lot on slow GPUs.
         const x0 = mod(L.ox + ox, STAGE_W), y0 = mod(L.oy + oy, STAGE_H);
+        const k = L.tile.width / STAGE_W;
         c.globalAlpha = 1;
-        for (const tx of [x0 - STAGE_W, x0]) for (const ty of [y0 - STAGE_H, y0]) {
-          c.drawImage(L.tile, tx, ty, STAGE_W, STAGE_H);
+        c.globalCompositeOperation = 'source-over';
+        for (const px of [x0 - STAGE_W, x0]) for (const py of [y0 - STAGE_H, y0]) {
+          const dx0 = Math.max(px, 0), dy0 = Math.max(py, 0);
+          const dw = Math.min(px + STAGE_W, STAGE_W) - dx0, dh = Math.min(py + STAGE_H, STAGE_H) - dy0;
+          if (dw < 0.5 || dh < 0.5) continue;
+          c.drawImage(L.tile, (dx0 - px) * k, (dy0 - py) * k, dw * k, dh * k, dx0, dy0, dw, dh);
         }
+        c.globalCompositeOperation = 'lighter';
         continue;
       }
       c.fillStyle = '#ffffff';
