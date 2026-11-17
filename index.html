@@ -85,19 +85,7 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6L2.5 9.4l6.6-.8z"/></svg>
             <span id="hud-score-value">0</span>
           </div>
-          <button id="btn-hint" class="corner-btn" aria-label="Show a hint (H)" disabled><span aria-hidden="true">?</span> Hint</button>
-          <div id="corner-controls">
-            <button id="btn-sound" class="icon-btn" aria-label="Mute sound" aria-pressed="false" title="Sound (M)">
-              <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
-              <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="w" d="M16.5 9.5l5 5M21.5 9.5l-5 5"/></svg>
-            </button>
-            <button id="btn-pause" class="icon-btn" aria-label="Pause (P)" title="Pause (P)">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-            </button>
-            <button id="btn-restart" class="icon-btn" aria-label="Restart mission" title="Restart">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path class="w" d="M5 12a7 7 0 1 0 2.1-5"/><path d="M4 4v5h5z"/></svg>
-            </button>
-          </div>
+          <button id="btn-hint" class="corner-btn" aria-label="Show a hint (H)" disabled><svg class="bulb" viewBox="0 0 24 24" aria-hidden="true"><path class="glass" d="M12 2.5a6.5 6.5 0 0 0-3.9 11.7c.6.5.9 1.1.9 1.8v.5h6v-.5c0-.7.3-1.3.9-1.8A6.5 6.5 0 0 0 12 2.5z"/><path class="base" d="M9.2 18.2h5.6M9.8 20.6h4.4"/></svg> Hint</button>
         </div>
 
         <!-- the four answer buttons -->
@@ -108,22 +96,20 @@
           <button class="opt" data-key="4"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">4</span><span class="opt-label">80°</span></button>
         </div>
 
-        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+        <!-- no on-screen sentence banners: messages go to assistive tech only -->
+        <div id="sr-live" class="sr-only" role="status" aria-live="polite"></div>
 
-        <!-- title / loading -->
+        <!-- start screen: full-bleed thumbnail + pulsing Start button (srcs set in main.ts, loaded first) -->
         <div id="title-overlay" class="overlay show" aria-hidden="false">
-          <div id="title-card" class="card">
-            <div class="eyebrow">ANGLE DEFENSE</div>
-            <h1>METEOR INTERCEPT</h1>
-            <p class="tag">Choose the right angle. The cannon turns by exactly that much.</p>
-            <div id="load-track"><div id="load-bar"></div></div>
-            <p id="load-text">Loading assets… 0%</p>
-            <button id="btn-play" class="cta" disabled>PLAY MISSION</button>
-            <fieldset class="seg" aria-label="Difficulty">
-              <label><input type="radio" name="difficulty-title" data-setting="difficulty" value="normal" checked /><span>Normal</span></label>
-              <label><input type="radio" name="difficulty-title" data-setting="difficulty" value="calm" /><span>Calm · no timer</span></label>
-            </fieldset>
-            <p class="keys">Keys <kbd>1</kbd>–<kbd>4</kbd> answer · <kbd>H</kbd> hint · <kbd>P</kbd> pause · <kbd>M</kbd> mute</p>
+          <img id="splash-art" alt="Angle Hunt" draggable="false" />
+          <div id="title-card">
+            <div id="load-track" aria-hidden="true"><div id="load-bar"></div></div>
+            <p id="load-text" role="status">Loading… 0%</p>
+            <button id="btn-play" class="start-btn" aria-label="Start game" disabled>
+              <span class="start-ring" aria-hidden="true"></span>
+              <span class="start-ring r2" aria-hidden="true"></span>
+              <span class="start-pulse"><img id="start-btn-img" alt="" draggable="false" /></span>
+            </button>
           </div>
         </div>
 

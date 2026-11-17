@@ -64,7 +64,7 @@ export class Game {
   private fxCtx: CanvasRenderingContext2D;
   private playfield: HTMLElement;
   private aura: HTMLElement;
-  private toastLayer: HTMLElement;
+  private floatLayer: HTMLElement;
 
   meteor: Meteor | null = null;
   projectile: Projectile | null = null;
@@ -100,7 +100,7 @@ export class Game {
     this.fxCtx = this.rs.addCanvas(stage.querySelector('#fx-canvas')!);
     this.playfield = stage.querySelector('#playfield')!;
     this.aura = stage.querySelector('#meteor-aura')!;
-    this.toastLayer = stage.querySelector('#float-layer')!;
+    this.floatLayer = stage.querySelector('#float-layer')!;
     this.scene = new SceneRenderer(stage, this.settings.quality);
     this.vfx = new VFX(stage.querySelector('#fx-dom')!);
     this.vfx.quality = this.settings.quality;
@@ -185,7 +185,7 @@ export class Game {
     this.shot = null;
     this.vfx.clear();
     this.overlay.set(null);
-    this.ui.hideToast();
+    this.ui.clearAnnouncement();
     this.ui.showEnd(null);
     this.ui.setLives(this.round.lives);
     this.ui.setScore(0, true);
@@ -272,11 +272,11 @@ export class Game {
         this.overlay.targetIntensity = 0.2;
         break;
       case 'HIT':
-        this.overlay.targetIntensity = 0;
+        // keep the solved diagram on screen: the ? has just resolved into the answer
         this.sm.after(0.55, () => this.sm.go('EXPLANATION'));
         break;
       case 'EXPLANATION':
-        this.ui.toast(this.explanation(), 'good', 1.6);
+        this.ui.announce(this.explanation());
         this.sm.after(1.0, () => this.sm.go('NEXT_WAVE'));
         break;
       case 'NEXT_WAVE':
@@ -354,31 +354,30 @@ export class Game {
 
   hint(): void {
     if (!this.sm.is('QUESTION_ACTIVE') || !this.geo) return;
-    this.overlay.emphasis = 1;
-    this.overlay.targetIntensity = 1;
+    const level = Math.min(2, this.round.wrongThisRound + 1);
+    this.overlay.showHint(level); // shown in the diagram, not as text
     this.inactivity = 0;
-    this.ui.toast(this.hintText(Math.min(2, this.round.wrongThisRound + 1)), 'hint', 3.2);
+    this.ui.announce(this.hintText(level));
   }
 
+  /** Spoken (screen-reader only) version of the visual hint. Never rendered on the play screen. */
   private hintText(level: number): string {
     const g = this.geo!;
-    const k = `<b class="k">${g.knownDeg}°</b>`;
-    const q = '<b class="q">?</b>';
     if (g.relation === 'linear-pair') {
-      if (level <= 1) return `Adjacent angles on a straight line add up to <b>180°</b>.`;
-      if (level === 2) return `${k} + ${q} = 180°`;
-      return `${q} = 180° − ${g.knownDeg}° = <b>${g.answerDeg}°</b>`;
+      if (level <= 1) return 'Hint: angles on a straight line add up to 180 degrees.';
+      if (level === 2) return `Hint: ${g.knownDeg} degrees plus x equals 180 degrees.`;
+      return `Hint: x equals 180 minus ${g.knownDeg} degrees.`;
     }
-    if (level <= 1) return `Vertically opposite angles are <b>equal</b>.`;
-    if (level === 2) return `The ${q} sits directly opposite ${k} across the crossing.`;
-    return `Opposite angles are equal → ${q} = <b>${g.answerDeg}°</b>`;
+    if (level <= 1) return 'Hint: vertically opposite angles are equal.';
+    if (level === 2) return `Hint: angle x is vertically opposite the ${g.knownDeg} degree angle.`;
+    return `Hint: x equals ${g.knownDeg} degrees.`;
   }
 
   private explanation(): string {
     const g = this.geo!;
     return g.relation === 'linear-pair'
-      ? `${g.knownDeg}° + <b>${g.answerDeg}°</b> = 180° ✓`
-      : `Opposite angles are equal → <b>${g.answerDeg}°</b> ✓`;
+      ? `Correct. ${g.knownDeg} plus ${g.answerDeg} equals 180 degrees.`
+      : `Correct. Vertically opposite angles are equal: ${g.answerDeg} degrees.`;
   }
 
   private onKey(e: KeyboardEvent): void {
@@ -475,8 +474,9 @@ export class Game {
     const r = this.round.registerHit();
     this.ui.setScore(this.round.score);
     this.ui.markCorrect(this.shot!.index);
-    const txt = r.firstTry ? `PERFECT INTERCEPT +${r.points}` : `ANGLE CLEARED +${r.points}`;
-    this.vfx.floatText(this.toastLayer, p.x, p.y - 70, txt, 'good');
+    // compact in-world score pop; the diagram's ? resolves into the answer
+    this.vfx.floatText(this.floatLayer, p.x, p.y - 70, `+${r.points}`, r.firstTry ? 'good perfect' : 'good');
+    this.overlay.resolve();
     this.shot = null;
     this.sm.go('HIT');
   }
@@ -491,11 +491,9 @@ export class Game {
     const n = this.round.registerMiss(shot.value);
     this.ui.markWrong(shot.index);
     this.overlay.ghost(this.geo!.referenceRayBearingDeg, this.geo!.turnSign, shot.value);
-    const off = Math.round(angularMiss(shot.bearing, this.geo!.targetBearingDeg));
-    const lp = pointOnBearing(TURRET, shot.bearing, 330);
-    this.vfx.floatText(this.toastLayer, lp.x, lp.y, `MISALIGNED · ${off}° off`, 'warn');
-    this.ui.toast(this.hintText(Math.min(3, n)), 'hint', n >= 2 ? 3.4 : 2.6);
-    this.overlay.emphasis = n >= 2 ? 1 : 0.5;
+    // feedback is visual: the red ghost arc of the tried angle + the diagram hint (no banners)
+    this.overlay.showHint(Math.min(3, n));
+    this.ui.announce(`${shot.value} degrees missed. ${this.hintText(Math.min(3, n))}`);
     this.shot = null;
     if (this.meteor) {
       this.meteor.speedTarget = 1;
@@ -513,7 +511,7 @@ export class Game {
     this.ui.setScore(this.round.score);
     this.ui.setOptionsEnabled(false);
     this.ui.setHintEnabled(false);
-    this.ui.toast(lives > 0 ? `SHIELD HIT · ${lives} left — let's try that angle again` : 'SHIELDS DOWN', 'warn', 1.6);
+    this.ui.announce(lives > 0 ? `Shield hit. ${lives} shields left.` : 'Shields down.');
     this.meteor = null;
     this.projectile = null;
     this.shot = null;

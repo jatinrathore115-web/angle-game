@@ -11,6 +11,14 @@ const bootStage = new ResponsiveStage(viewport, stage);
 const loadText = document.getElementById('load-text')!;
 const loadBar = document.getElementById('load-bar')!;
 
+// Start screen art is requested before the game assets so it appears first.
+const splashArt = document.getElementById('splash-art') as HTMLImageElement;
+const startImg = document.getElementById('start-btn-img') as HTMLImageElement;
+splashArt.addEventListener('load', () => stage.classList.add('splash-ready'), { once: true });
+splashArt.addEventListener('error', () => stage.classList.add('splash-ready'), { once: true }); // fall back to the plain dark panel
+splashArt.src = `${import.meta.env.BASE_URL}assets/start-thumbnail.png`;
+startImg.src = `${import.meta.env.BASE_URL}assets/start-button.png`;
+
 // prevent page scroll / pinch / long-press selection during play
 for (const ev of ['touchmove', 'gesturestart', 'contextmenu'] as const) {
   stage.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
@@ -18,7 +26,7 @@ for (const ev of ['touchmove', 'gesturestart', 'contextmenu'] as const) {
 
 loadAssets((done, total) => {
   loadBar.style.transform = `scaleX(${done / total})`;
-  loadText.textContent = `Loading assets… ${Math.round((done / total) * 100)}%`;
+  loadText.textContent = `Loading… ${Math.round((done / total) * 100)}%`;
 })
   .then((assets) => {
     bootStage.destroy();

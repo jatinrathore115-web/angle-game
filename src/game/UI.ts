@@ -25,22 +25,21 @@ export interface EndStats {
 
 const $ = <T extends HTMLElement = HTMLElement>(root: ParentNode, sel: string) => root.querySelector<T>(sel)!;
 
-/** All DOM UI: HUD, the four answer buttons, toasts and overlays. Buttons stay crisp DOM text. */
+/** All DOM UI: HUD, the four answer buttons, overlays and a screen-reader live region. Buttons stay crisp DOM text. */
 export class UI {
   readonly optionButtons: HTMLButtonElement[];
   private scoreEl: HTMLElement;
   private shownScore = 0;
   private targetScore = 0;
   private tickAcc = 0;
-  private toastEl: HTMLElement;
-  private toastTimer = 0;
+  private liveEl: HTMLElement;
   onScoreTick?: () => void;
   private cleanup: (() => void)[] = [];
 
   constructor(private stage: HTMLElement, private h: UIHandlers) {
     this.optionButtons = [...stage.querySelectorAll<HTMLButtonElement>('#options .opt')];
     this.scoreEl = $(stage, '#hud-score-value');
-    this.toastEl = $(stage, '#toast');
+    this.liveEl = $(stage, '#sr-live');
     this.optionButtons.forEach((b, i) => {
       this.on(b, 'click', () => this.h.onOption(i));
       this.on(b, 'pointerenter', (e) => {
@@ -52,10 +51,7 @@ export class UI {
     });
     this.on($(stage, '#btn-play'), 'click', () => this.h.onPlay());
     this.on($(stage, '#btn-hint'), 'click', () => this.h.onHint());
-    this.on($(stage, '#btn-pause'), 'click', () => this.h.onPauseToggle());
     this.on($(stage, '#btn-resume'), 'click', () => this.h.onPauseToggle());
-    this.on($(stage, '#btn-sound'), 'click', () => this.h.onMuteToggle());
-    this.on($(stage, '#btn-restart'), 'click', () => this.h.onRestart());
     this.on($(stage, '#btn-pause-restart'), 'click', () => this.h.onRestart());
     this.on($(stage, '#btn-retry'), 'click', () => this.h.onRestart());
     this.on($(stage, '#btn-end-sound'), 'click', () => this.h.onMuteToggle());
@@ -89,8 +85,9 @@ export class UI {
   setReady(): void {
     $(this.stage, '#title-card').classList.add('ready');
     const play = $<HTMLButtonElement>(this.stage, '#btn-play');
+    // No auto-focus: it would paint a focus ring for mouse/touch players.
+    // Keyboard players can Tab to it, or just press Enter/Space (handled in Game.onKey).
     play.disabled = false;
-    play.focus({ preventScroll: true });
   }
 
   showTitle(show: boolean): void {
@@ -125,6 +122,10 @@ export class UI {
     el.classList.toggle('show', show);
     el.setAttribute('aria-hidden', String(!show));
     (el as HTMLElement & { inert: boolean }).inert = !show;
+    // While any full-screen overlay is open, the gameplay UI behind it must not be
+    // reachable by Tab or assistive tech (it is covered and meaningless there).
+    const anyOpen = !!this.stage.querySelector('.overlay.show');
+    for (const s of ['#hud', '#options']) (this.stage.querySelector(s) as HTMLElement & { inert: boolean }).inert = anyOpen;
   }
 
   setPlaying(playing: boolean): void {
@@ -161,10 +162,6 @@ export class UI {
   }
 
   setMuted(m: boolean): void {
-    const b = $(this.stage, '#btn-sound');
-    b.classList.toggle('muted', m);
-    b.setAttribute('aria-pressed', String(m));
-    b.setAttribute('aria-label', m ? 'Unmute sound' : 'Mute sound');
     $<HTMLInputElement>(this.stage, '#set-mute').checked = m;
     $(this.stage, '#btn-end-sound').textContent = m ? 'SOUND: OFF' : 'SOUND: ON';
   }
@@ -222,23 +219,21 @@ export class UI {
     el.classList.add(cls);
   }
 
-  // ------------------------------------------------------------ toasts
-  toast(html: string, kind: 'hint' | 'good' | 'warn' | 'info' = 'info', sec = 1.8): void {
-    this.toastEl.innerHTML = html;
-    this.toastEl.className = `toast show ${kind}`;
-    this.toastTimer = sec;
+  // ------------------------------------------------------------ screen-reader announcements
+  /**
+   * Gameplay never shows sentence banners; the maths is drawn in the diagram.
+   * Assistive tech still gets the words through a visually hidden live region.
+   */
+  announce(text: string): void {
+    this.liveEl.textContent = '';
+    window.setTimeout(() => (this.liveEl.textContent = text), 30); // re-announce identical text
   }
 
-  hideToast(): void {
-    this.toastTimer = 0;
-    this.toastEl.classList.remove('show');
+  clearAnnouncement(): void {
+    this.liveEl.textContent = '';
   }
 
   update(dt: number): void {
-    if (this.toastTimer > 0) {
-      this.toastTimer -= dt;
-      if (this.toastTimer <= 0) this.toastEl.classList.remove('show');
-    }
     if (this.shownScore !== this.targetScore) {
       const diff = this.targetScore - this.shownScore;
       const step = Math.sign(diff) * Math.max(1, Math.ceil(Math.abs(diff) * Math.min(1, dt * 8)));

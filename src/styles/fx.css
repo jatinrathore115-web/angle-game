@@ -265,3 +265,27 @@
   .fx-smokeDom.play { animation: none; }
   .float-text { animation-duration: 1.7s; }
 }
+
+/* ---------- start screen ---------- */
+/* the Start button "breathes": gentle scale + neon glow swell */
+@keyframes startPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 12px rgba(190, 70, 255, 0.55)); }
+  50% { transform: scale(1.07); filter: drop-shadow(0 0 34px rgba(215, 110, 255, 0.95)); }
+}
+
+/* ripple rings radiating from the button: "tap here" without any words */
+@keyframes startRipple {
+  0% { opacity: 0.8; transform: scale(0.92); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+@keyframes startGlowOnly {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(190, 70, 255, 0.5)); }
+  50% { filter: drop-shadow(0 0 30px rgba(215, 110, 255, 0.95)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #title-card.ready .start-pulse { animation: startGlowOnly 2s ease-in-out infinite; }
+  #title-card.ready .start-ring { animation: none; }
+  #title-overlay:not(.show) { transform: none; }
+}
