@@ -25,6 +25,8 @@ export class GeometryOverlay {
   geo: QuestionGeometry | null = null;
   /** 0..1 eased display intensity (low by default, raised by hint/inactivity) */
   intensity = 0;
+  /** >1 on small screens (from ResponsiveStage.ui) so angle labels stay legible */
+  labelScale = 1;
   targetIntensity = 0;
   /** extra emphasis pulse for hints, 0..1 */
   emphasis = 0;
@@ -159,7 +161,7 @@ export class GeometryOverlay {
         const cA = norm360(g.referenceRayBearingDeg + g.turnSign * 35);
         const cB = norm360(g.referenceRayBearingDeg + g.turnSign * 145);
         const at = angularMiss(cA, g.targetBearingDeg) > angularMiss(cB, g.targetBearingDeg) ? cA : cB;
-        const lp = pointOnBearing(TURRET, at, R_STRAIGHT + 30);
+        const lp = pointOnBearing(TURRET, at, R_STRAIGHT + 30 * this.labelScale);
         this.label(ctx, '180°', lp.x, lp.y, `rgb(${HINT_RGB})`, 34, Math.min(1, (this.t - this.hintT - 0.6) * 4));
       }
     }
@@ -173,10 +175,11 @@ export class GeometryOverlay {
 
     // labels (kept readable even at low intensity)
     const la = Math.max(0.9, E);
-    const kp = pointOnBearing(TURRET, arcMid(g.knownArc), LABEL_R);
+    const lr = LABEL_R + (this.labelScale - 1) * 30; // labels sit a little further out when enlarged
+    const kp = pointOnBearing(TURRET, arcMid(g.knownArc), lr);
     this.label(ctx, `${g.knownDeg}°`, kp.x, kp.y, '#FFE15A', 40, la);
     // The unknown is named like a textbook figure: an italic variable "x" (find the value of x).
-    const up = pointOnBearing(TURRET, arcMid(g.unknownArc), LABEL_R + 6);
+    const up = pointOnBearing(TURRET, arcMid(g.unknownArc), lr + 6);
     if (this.resolved) {
       // worked-solution ending: x = 104°, with a short pop
       const k = Math.min(1, (this.t - this.resolveT) / 0.35);
@@ -202,8 +205,8 @@ export class GeometryOverlay {
   private mathLabel(
     ctx: CanvasRenderingContext2D, rest: string, cx: number, cy: number, size: number, color: string, alpha: number, glow: number,
   ): void {
-    const varFont = `italic 600 ${size * 1.12}px "Cambria Math", Cambria, "Times New Roman", serif`;
-    const restFont = `800 ${size * 0.82}px "Baloo 2", "Segoe UI", system-ui, sans-serif`;
+    const varFont = `italic 600 ${size * 1.12 * this.labelScale}px "Cambria Math", Cambria, "Times New Roman", serif`;
+    const restFont = `800 ${size * 0.82 * this.labelScale}px "Baloo 2", "Segoe UI", system-ui, sans-serif`;
     ctx.save();
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
@@ -273,7 +276,7 @@ export class GeometryOverlay {
   ): void {
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.font = `800 ${size}px "Baloo 2", "Segoe UI", system-ui, sans-serif`;
+    ctx.font = `800 ${size * this.labelScale}px "Baloo 2", "Segoe UI", system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0,0,0,0.85)';

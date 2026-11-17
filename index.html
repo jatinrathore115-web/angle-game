@@ -45,9 +45,8 @@
             <div id="bg-flares" class="layer"></div>
           </div>
         </div>
-        <!-- free-floating depth layers: twinkling stars, drifting dust, shooting stars -->
-        <div id="stars" class="layer" aria-hidden="true"></div>
-        <div id="dust" class="layer" aria-hidden="true"></div>
+        <!-- free-floating depth layers: drifting dust and shooting stars (the 3-layer starfield draws into the world canvas) -->
+                <div id="dust" class="layer" aria-hidden="true"></div>
         <div id="shooting" class="layer" aria-hidden="true"></div>
 
         <!-- 5-9. playfield (the only thing camera-shake moves) -->
@@ -90,10 +89,10 @@
 
         <!-- the four answer buttons -->
         <div id="options" role="group" aria-label="Choose the missing angle">
-          <button class="opt" data-key="1"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">1</span><span class="opt-label">76°</span></button>
-          <button class="opt" data-key="2"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">2</span><span class="opt-label">104°</span></button>
-          <button class="opt" data-key="3"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">3</span><span class="opt-label">114°</span></button>
-          <button class="opt" data-key="4"><span class="opt-shape" aria-hidden="true"></span><span class="opt-key" aria-hidden="true">4</span><span class="opt-label">80°</span></button>
+          <button class="opt" data-key="1"><span class="opt-shape" aria-hidden="true"></span><span class="opt-label">76°</span></button>
+          <button class="opt" data-key="2"><span class="opt-shape" aria-hidden="true"></span><span class="opt-label">104°</span></button>
+          <button class="opt" data-key="3"><span class="opt-shape" aria-hidden="true"></span><span class="opt-label">114°</span></button>
+          <button class="opt" data-key="4"><span class="opt-shape" aria-hidden="true"></span><span class="opt-label">80°</span></button>
         </div>
 
         <!-- no on-screen sentence banners: messages go to assistive tech only -->
@@ -151,12 +150,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <div id="rotate-overlay" aria-live="polite">
-        <div class="rot-icon" aria-hidden="true"></div>
-        <p>Rotate your device</p>
-        <small>Angle Defense plays in landscape.</small>
       </div>
     </main>
     <script type="module" src="/src/main.ts"></script>

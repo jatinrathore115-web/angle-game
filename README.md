@@ -59,3 +59,11 @@ The five supplied PNGs live in `public/assets/`. They are copied from `assets/` 
 - `UI.ts`, `ResponsiveStage.ts` (1920×1080 logical stage, letterboxed, DPR-aware canvases).
 
 Styles are in `src/styles/`. Every named keyframe the effects use is in `fx.css`.
+
+## Responsive & touch
+
+- **Stage:** a 1920×1080 logical stage, uniformly scaled with no distortion. Letterbox bars on other aspect ratios show a dimmed copy of the backdrop, and the layout respects phone notches (safe areas).
+- **Small screens:** a `--ui` factor (CSS variable) enlarges the controls, HUD, angle labels and menus relative to the art, so answer buttons never fall below the 44 px touch minimum.
+- **Portrait phones and tablets:** the game rotates itself to fill the screen, so it's playable immediately, even with rotation lock on. A desktop window in portrait just letterboxes.
+- **Touch:** hover effects apply only on devices with a real hover, the pressed state works on iOS, and double-tap zoom, pinch, scroll and long-press are blocked.
+- **QA:** `node scripts/qa-devices.mjs <outDir> [url]` runs 16 devices (phones, tablets, laptops, desktops, ultrawide) with touch emulation. It taps through a round on each and writes a contact sheet.

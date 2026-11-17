@@ -1,6 +1,14 @@
 import { ART_SX, ART_SY, STAGE_H, STAGE_W } from './calibration';
 import { mulberry32 } from './LevelBank';
+import { Starfield } from './Starfield';
 import type { Quality } from './types';
+
+/** Large drifting gas clouds (stage px): purple, blue, orange, kept faint so play stays readable. */
+const CURRENTS: { y: number; w: number; h: number; c: string; dur: number }[] = [
+  { y: 80, w: 900, h: 420, c: '170,60,230', dur: 140 },
+  { y: 520, w: 1000, h: 460, c: '40,110,255', dur: 170 },
+  { y: 260, w: 760, h: 360, c: '255,110,40', dur: 200 },
+];
 
 /**
  * Live background built once in the DOM. Nearly everything is animated by CSS
@@ -12,7 +20,8 @@ import type { Quality } from './types';
  *   - starFlare        diffraction-cross glints on the painted bright stars
  *   - arcEnergyFlow    energy glints flowing along the curve of the blue nebula band
  *  free-floating depth layers:
- *   - starTwinkle      seeded multi-depth twinkling starfield
+ *   - Starfield        3-layer drifting parallax starfield on canvas (moving stars, depth)
+ *   - nebulaFlow       large soft gas clouds gliding slowly across the sky
  *   - dustDrift        faint space dust drifting slowly across the view
  *   - shootingStar     an occasional faint meteor streak (scheduled on game time, so it pauses)
  *   - pointer parallax deep layer ±4px (plate) vs near layer ±7px (foreground motes)
@@ -71,11 +80,13 @@ export class SceneRenderer {
   private tx = 0;
   private ty = 0;
 
-  constructor(private stage: HTMLElement, private quality: Quality) {
+  private starfield: Starfield;
+
+  constructor(private stage: HTMLElement, private quality: Quality, starCtx: CanvasRenderingContext2D) {
     this.parallaxNear = stage.querySelector<HTMLElement>('#parallax-glow')!;
     this.parallaxDeep = stage.querySelector<HTMLElement>('#bg-parallax')!;
     this.shootingLayer = stage.querySelector<HTMLElement>('#shooting')!;
-    this.buildStars(quality);
+    this.starfield = new Starfield(starCtx, quality);
     this.buildDust(quality);
     this.buildNebula();
     this.buildFlares();
@@ -85,53 +96,41 @@ export class SceneRenderer {
     stage.ownerDocument.addEventListener('pointermove', this.onPointer, { passive: true });
   }
 
+  /** Maps client coords to stage coords (set by Game; handles the rotated portrait layout). */
+  toStage?: (x: number, y: number) => { x: number; y: number };
+
   private onPointer = (e: PointerEvent): void => {
-    this.tx = (e.clientX / window.innerWidth) * 2 - 1;
-    this.ty = (e.clientY / window.innerHeight) * 2 - 1;
+    if (e.pointerType !== 'mouse') return; // parallax follows a mouse, not taps
+    const p = this.toStage ? this.toStage(e.clientX, e.clientY) : { x: (e.clientX / window.innerWidth) * STAGE_W, y: (e.clientY / window.innerHeight) * STAGE_H };
+    this.tx = Math.max(-1, Math.min(1, (p.x / STAGE_W) * 2 - 1));
+    this.ty = Math.max(-1, Math.min(1, (p.y / STAGE_H) * 2 - 1));
   };
 
   /** Per frame (game time — stops while paused): ease parallax, schedule shooting stars. */
   update(dt: number, reduced: boolean): void {
-    if (reduced) return;
-    const k = Math.min(1, dt * 2.5);
-    this.px += (this.tx - this.px) * k;
-    this.py += (this.ty - this.py) * k;
-    // near layer moves more than the deep plate -> sense of depth
-    this.parallaxNear.style.transform = `translate3d(${(-this.px * 7).toFixed(2)}px, ${(-this.py * 7).toFixed(2)}px, 0)`;
-    this.parallaxDeep.style.transform = `translate3d(${(-this.px * 4).toFixed(2)}px, ${(-this.py * 4).toFixed(2)}px, 0)`;
-
-    if (this.quality === 'low') return;
+    if (!reduced) {
+      const k = Math.min(1, dt * 2.5);
+      this.px += (this.tx - this.px) * k;
+      this.py += (this.ty - this.py) * k;
+      // depth: near motes move most, the painted plate least
+      this.parallaxNear.style.transform = `translate3d(${(-this.px * 7).toFixed(2)}px, ${(-this.py * 7).toFixed(2)}px, 0)`;
+      this.parallaxDeep.style.transform = `translate3d(${(-this.px * 4).toFixed(2)}px, ${(-this.py * 4).toFixed(2)}px, 0)`;
+    }
+    this.starfield.update(dt, this.px, this.py, reduced);
+    if (reduced || this.quality === 'low') return;
     this.nextShooter -= dt;
     if (this.nextShooter <= 0) {
       this.launchShooter();
-      this.nextShooter = 7 + this.rng() * 9;
+      this.nextShooter = 5 + this.rng() * 6;
     }
   }
 
-  // ------------------------------------------------------------ builders
-  private buildStars(quality: Quality): void {
-    const host = this.stage.querySelector<HTMLElement>('#stars')!;
-    host.textContent = '';
-    const rng = mulberry32(1337);
-    const n = quality === 'high' ? 130 : quality === 'medium' ? 85 : 45;
-    const tints = ['#ffffff', '#cfe0ff', '#9fc4ff', '#ffd9b0', '#ffb3e6', '#ffb070'];
-    const frag = document.createDocumentFragment();
-    for (let i = 0; i < n; i++) {
-      const s = document.createElement('i');
-      const depth = rng();
-      const size = depth < 0.6 ? 1 : depth < 0.9 ? 1.6 : 2.6;
-      s.className = 'star' + (rng() < 0.38 ? ' tw' : '');
-      s.style.left = `${(rng() * STAGE_W).toFixed(1)}px`;
-      s.style.top = `${(rng() * STAGE_H).toFixed(1)}px`;
-      s.style.width = s.style.height = `${size}px`;
-      s.style.background = tints[rng() < 0.72 ? 0 : 1 + Math.floor(rng() * (tints.length - 1))];
-      s.style.setProperty('--o', (0.25 + depth * 0.45).toFixed(2));
-      s.style.animationDuration = `${(2.5 + rng() * 4.5).toFixed(2)}s`;
-      s.style.animationDelay = `${(-rng() * 7).toFixed(2)}s`;
-      frag.appendChild(s);
-    }
-    host.appendChild(frag);
+  /** Every animation frame (also while paused, so the field stays drawn). */
+  render(reduced: boolean): void {
+    this.starfield.render(reduced);
   }
+
+  // ------------------------------------------------------------ builders
 
   private buildDust(quality: Quality): void {
     const host = this.stage.querySelector<HTMLElement>('#dust')!;
@@ -172,8 +171,20 @@ export class SceneRenderer {
       d.style.background = `radial-gradient(closest-side, rgba(${n.c},0.6), rgba(${n.c},0.2) 55%, rgba(${n.c},0) 100%)`;
       d.style.animationDuration = `${n.dur}s`;
       d.style.animationDelay = `${-i * 4.3}s`;
-      d.style.setProperty('--dx', `${(i % 2 ? 1 : -1) * (5 + (i % 4) * 2)}px`);
-      d.style.setProperty('--dy', `${(i % 3 ? -1 : 1) * (4 + (i % 3) * 2)}px`);
+      d.style.setProperty('--dx', `${(i % 2 ? 1 : -1) * (10 + (i % 4) * 4)}px`);
+      d.style.setProperty('--dy', `${(i % 3 ? -1 : 1) * (8 + (i % 3) * 4)}px`);
+      host.appendChild(d);
+    });
+    // "nebula currents": large soft clouds of gas gliding slowly across the sky
+    CURRENTS.forEach((c, i) => {
+      const d = document.createElement('i');
+      d.className = 'neb-current';
+      d.style.top = `${c.y}px`;
+      d.style.width = `${c.w}px`;
+      d.style.height = `${c.h}px`;
+      d.style.background = `radial-gradient(closest-side, rgba(${c.c},0.5), rgba(${c.c},0.16) 55%, rgba(${c.c},0) 100%)`;
+      d.style.animationDuration = `${c.dur}s`;
+      d.style.animationDelay = `${-c.dur * (0.2 + i * 0.3)}s`;
       host.appendChild(d);
     });
   }
@@ -252,7 +263,7 @@ export class SceneRenderer {
 
   rebuildStars(q: Quality): void {
     this.quality = q;
-    this.buildStars(q);
+    this.starfield.build(q);
     this.buildDust(q);
   }
 

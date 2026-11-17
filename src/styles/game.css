@@ -10,7 +10,6 @@
 #nebula { z-index: 1; mix-blend-mode: screen; }
 #arc-flow { z-index: 2; mix-blend-mode: screen; overflow: visible; }
 #bg-flares { z-index: 3; }
-#stars { z-index: 1; }
 #dust { z-index: 2; }
 #shooting { z-index: 3; }
 #playfield { z-index: 5; will-change: transform; }
@@ -31,23 +30,22 @@
 #game-stage:not(.loaded) img.art,
 #game-stage:not(.loaded) #turret { visibility: hidden; }
 
-/* ---------- starfield ---------- */
-.star {
-  position: absolute;
-  border-radius: 50%;
-  opacity: var(--o, 0.4);
-  box-shadow: 0 0 3px currentColor;
-}
-
-.star.tw {
-  animation: starTwinkle 4s ease-in-out infinite;
-}
-
+/* ---------- nebula glow (the moving starfield is a canvas: Starfield.ts) ---------- */
 .neb {
   position: absolute;
   border-radius: 50%;
-  opacity: 0.12;
-  animation: nebulaBreathe 30s ease-in-out infinite;
+  opacity: 0.16;
+  animation: nebulaBreathe 22s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* large gas clouds gliding right -> left across the whole sky */
+.neb-current {
+  position: absolute;
+  left: 0;
+  border-radius: 50%;
+  opacity: 0;
+  animation: nebulaFlow 160s linear infinite;
   will-change: transform, opacity;
 }
 
@@ -252,9 +250,10 @@
   box-shadow: 0 0 14px rgba(255, 130, 20, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   font-weight: 800;
   letter-spacing: 0.04em;
+  scale: var(--ui, 1);
 }
 
-#hud-level-wrap { left: 112px; }
+#hud-level-wrap { left: 112px; transform-origin: 0 0; }
 #hud-level { font-size: 30px; color: #ffb12d; text-shadow: 0 0 10px rgba(255, 140, 0, 0.55); }
 #hud-progress { font-size: 18px; opacity: 0.6; }
 #hud-lives { display: flex; gap: 8px; margin-left: 4px; }
@@ -276,7 +275,7 @@
 
 .led.lost { animation: ledLost 0.8s ease-out; }
 
-#hud-score { right: 112px; font-size: 30px; }
+#hud-score { right: 112px; font-size: 30px; transform-origin: 100% 0; }
 #hud-score svg { width: 30px; height: 30px; fill: #ffc23a; filter: drop-shadow(0 0 6px rgba(255, 170, 30, 0.7)); }
 #hud-score-value { min-width: 2.2ch; text-align: right; font-variant-numeric: tabular-nums; }
 #hud-score.counting #hud-score-value { color: #ffe39a; }
@@ -289,7 +288,7 @@
   transition: transform 0.12s ease, box-shadow 0.15s, opacity 0.2s, border-color 0.15s;
 }
 
-.corner-btn:hover:not(:disabled) {
+.can-hover .corner-btn:hover:not(:disabled) {
   border-color: #ffb12d;
   box-shadow: 0 0 16px rgba(255, 150, 30, 0.45);
 }
@@ -314,6 +313,8 @@
   font-weight: 800;
   letter-spacing: 0.04em;
   color: #ffd99a;
+  scale: var(--ui, 1);
+  transform-origin: 0 100%;
 }
 
 #btn-hint .bulb {
@@ -341,11 +342,13 @@
 }
 
 .opt {
-  --w: 250px;
-  --h: 92px;
-  --c: 24px; /* chamfer */
+  /* grow on small screens (--ui) so each button stays >= ~44 CSS px tall; width capped so the row fits */
+  --w: min(calc(250px * var(--ui, 1)), 280px);
+  --h: calc(92px * var(--ui, 1));
+  --gap: 26px;
+  --c: calc(24px * min(var(--ui, 1), 1.3)); /* chamfer */
   position: absolute;
-  top: calc(966px - var(--h) / 2);
+  top: calc(1012px - var(--h));
   width: var(--w);
   height: var(--h);
   padding: 0;
@@ -357,10 +360,11 @@
   outline: none;
 }
 
-.opt:nth-child(1) { left: calc(556px - var(--w) / 2); }
-.opt:nth-child(2) { left: calc(832px - var(--w) / 2); }
-.opt:nth-child(3) { left: calc(1108px - var(--w) / 2); }
-.opt:nth-child(4) { left: calc(1384px - var(--w) / 2); }
+/* centres: 970 + (i - 1.5) * (w + gap)  ->  556 / 832 / 1108 / 1384 at --ui = 1 */
+.opt:nth-child(1) { left: calc(970px - 1.5 * (var(--w) + var(--gap)) - var(--w) / 2); }
+.opt:nth-child(2) { left: calc(970px - 0.5 * (var(--w) + var(--gap)) - var(--w) / 2); }
+.opt:nth-child(3) { left: calc(970px + 0.5 * (var(--w) + var(--gap)) - var(--w) / 2); }
+.opt:nth-child(4) { left: calc(970px + 1.5 * (var(--w) + var(--gap)) - var(--w) / 2); }
 
 .opt-shape {
   position: absolute;
@@ -394,7 +398,7 @@
 .opt-label {
   position: relative;
   display: block;
-  font-size: 50px;
+  font-size: calc(50px * min(var(--ui, 1), 1.45));
   font-weight: 900;
   font-style: italic;
   line-height: var(--h);
@@ -404,21 +408,13 @@
   font-variant-numeric: tabular-nums;
 }
 
-.opt-key {
-  position: absolute;
-  left: 30px;
-  top: 8px;
-  font-size: 15px;
-  font-weight: 800;
-  color: rgba(255, 190, 110, 0.55);
-}
 
-.opt:not(:disabled):hover {
+.can-hover .opt:not(:disabled):hover {
   transform: scale(1.025);
   filter: drop-shadow(0 0 12px rgba(255, 150, 20, 0.85)) drop-shadow(0 0 2px rgba(255, 210, 120, 0.95));
 }
 
-.opt:not(:disabled):hover .opt-shape::after,
+.can-hover .opt:not(:disabled):hover .opt-shape::after,
 .opt:focus-visible .opt-shape::after,
 .opt.correct .opt-shape::after { animation: buttonSheen 0.7s ease-out; }
 
@@ -461,7 +457,7 @@
   position: absolute;
   transform: translate(-50%, -50%);
   white-space: nowrap;
-  font-size: 30px;
+  font-size: calc(30px * var(--ui, 1));
   font-weight: 900;
   letter-spacing: 0.06em;
   color: #ffe39a;
@@ -470,7 +466,7 @@
   pointer-events: none;
 }
 
-.float-text.perfect { font-size: 38px; color: #fff2b0; }
+.float-text.perfect { font-size: calc(38px * var(--ui, 1)); color: #fff2b0; }
 
 .float-text.warn { color: #ffb08a; font-size: 26px; text-shadow: 0 0 10px rgba(255, 90, 30, 0.7), 0 2px 0 rgba(0, 0, 0, 0.5); }
 
@@ -563,14 +559,14 @@
 }
 
 #title-card.ready .start-btn { opacity: 1; transform: scale(1); pointer-events: auto; }
-#title-card.ready .start-btn:hover { transform: scale(1.08); }
+.can-hover #title-card.ready .start-btn:hover { transform: scale(1.08); }
 #title-card.ready .start-btn:active { transform: scale(0.94); transition-duration: 0.08s; }
 .start-btn:focus-visible { box-shadow: 0 0 0 6px rgba(5, 7, 15, 0.9), 0 0 0 10px rgba(235, 190, 255, 0.95), 0 0 26px 10px rgba(200, 90, 255, 0.7); }
 
 .start-pulse { position: absolute; inset: 0; display: block; }
 .start-pulse img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
 #title-card.ready .start-pulse { animation: startPulse 1.6s ease-in-out infinite; }
-.start-btn:hover .start-pulse { animation-duration: 0.9s; }
+.can-hover .start-btn:hover .start-pulse { animation-duration: 0.9s; }
 
 .start-ring {
   position: absolute;
@@ -587,6 +583,7 @@
 
 .card {
   position: relative;
+  scale: min(var(--ui, 1), 1.4);
   min-width: 560px;
   padding: 30px 44px 28px;
   text-align: center;
@@ -618,7 +615,7 @@
   box-shadow: 0 0 22px rgba(255, 140, 0, 0.6), inset 0 -3px 0 rgba(0, 0, 0, 0.2);
 }
 
-.cta:hover:not(:disabled) { transform: scale(1.03); box-shadow: 0 0 30px rgba(255, 160, 20, 0.85), inset 0 -3px 0 rgba(0, 0, 0, 0.2); }
+.can-hover .cta:hover:not(:disabled) { transform: scale(1.03); box-shadow: 0 0 30px rgba(255, 160, 20, 0.85), inset 0 -3px 0 rgba(0, 0, 0, 0.2); }
 .cta:active:not(:disabled) { transform: scale(0.98); }
 .cta:disabled { opacity: 0.35; }
 
@@ -628,7 +625,7 @@
   color: #ffd99a;
 }
 
-.ghost:hover { box-shadow: 0 0 16px rgba(255, 150, 30, 0.45); }
+.can-hover .ghost:hover { box-shadow: 0 0 16px rgba(255, 150, 30, 0.45); }
 .btn-row { display: flex; gap: 16px; justify-content: center; margin-top: 22px; }
 
 .seg {
@@ -670,7 +667,7 @@
 #end-card.won h2 { color: #ffd34d; text-shadow: 0 0 18px rgba(255, 190, 40, 0.6); }
 
 /* paused: freeze ambient CSS too */
-#game-stage.paused .star,
+#game-stage.paused .neb-current,
 #game-stage.paused #bg-drift,
 #game-stage.paused .flare,
 #game-stage.paused .mote,

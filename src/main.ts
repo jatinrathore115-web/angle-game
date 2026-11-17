@@ -23,6 +23,15 @@ startImg.src = `${import.meta.env.BASE_URL}assets/start-button.png`;
 for (const ev of ['touchmove', 'gesturestart', 'contextmenu'] as const) {
   stage.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
 }
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false }); // no double-tap zoom
+// iOS only applies :active (instant pressed feedback) when a touch listener exists
+document.addEventListener('touchstart', () => {}, { passive: true });
+
+// Hover effects only where a real hover exists, so they never "stick" after a tap.
+const hoverMq = window.matchMedia('(hover: hover) and (pointer: fine)');
+const syncHover = () => document.documentElement.classList.toggle('can-hover', hoverMq.matches);
+syncHover();
+hoverMq.addEventListener('change', syncHover);
 
 loadAssets((done, total) => {
   loadBar.style.transform = `scaleX(${done / total})`;
@@ -33,6 +42,8 @@ loadAssets((done, total) => {
     (document.getElementById('bg') as HTMLImageElement).src = assets.background.src;
     (document.getElementById('frame') as HTMLImageElement).src = assets.frame.src;
     (document.getElementById('frame-glow') as HTMLImageElement).src = assets.frame.src;
+    // letterbox bars (other aspect ratios) show a dimmed copy of the backdrop, not flat black
+    viewport.style.backgroundImage = `linear-gradient(rgba(4,6,15,0.62), rgba(4,6,15,0.62)), url("${assets.background.src}")`;
     const game = new Game(stage, viewport, assets);
     game.ui.setReady();
     loadText.textContent = 'Ready.';

@@ -101,7 +101,12 @@ export class Game {
     this.playfield = stage.querySelector('#playfield')!;
     this.aura = stage.querySelector('#meteor-aura')!;
     this.floatLayer = stage.querySelector('#float-layer')!;
-    this.scene = new SceneRenderer(stage, this.settings.quality);
+    this.scene = new SceneRenderer(stage, this.settings.quality, this.worldCtx);
+    this.scene.toStage = (x, y) => this.rs.toStage(x, y);
+    // small screens: enlarge in-canvas angle labels together with the DOM controls
+    const syncUi = () => (this.overlay.labelScale = Math.min(this.rs.ui, 1.45));
+    syncUi();
+    this.rs.onLayout(syncUi);
     this.vfx = new VFX(stage.querySelector('#fx-dom')!);
     this.vfx.quality = this.settings.quality;
     this.turret = new Turret(stage.querySelector('#turret')!, assets.base, assets.barrel, 204);
@@ -636,6 +641,8 @@ export class Game {
     const w = this.worldCtx, f = this.fxCtx;
     this.rs.clear(w);
     this.rs.clear(f);
+    // stars go first into the world canvas: no extra full-screen layer to composite
+    this.scene.render(this.reduced);
     this.overlay.draw(w);
     const m = this.meteor;
     if (m && m.alive) {

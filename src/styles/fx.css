@@ -5,9 +5,19 @@
    ============================================================ */
 
 /* ---------- ambient ---------- */
+/* clearly visible but slow "breathing" of the painted nebulae */
 @keyframes nebulaBreathe {
-  0%, 100% { opacity: 0.1; transform: translate3d(0, 0, 0) scale(1); }
-  50% { opacity: 0.18; transform: translate3d(var(--dx, 6px), var(--dy, -4px), 0) scale(1.01); }
+  0%, 100% { opacity: 0.14; transform: translate3d(0, 0, 0) scale(1); }
+  50% { opacity: 0.34; transform: translate3d(var(--dx, 10px), var(--dy, -8px), 0) scale(1.06); }
+}
+
+/* gas cloud enters from the right edge, glides across, fades out on the left */
+@keyframes nebulaFlow {
+  0% { opacity: 0; transform: translate3d(1920px, 0, 0) scale(1); }
+  12% { opacity: 0.22; }
+  50% { transform: translate3d(560px, 30px, 0) scale(1.1); }
+  88% { opacity: 0.22; }
+  100% { opacity: 0; transform: translate3d(-1000px, -10px, 0) scale(1); }
 }
 
 @keyframes starTwinkle {
@@ -241,7 +251,7 @@
 
 /* ---------- reduced motion: keep learning feedback, drop ambience/shake ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .star.tw,
+  .neb-current,
   .pstar,
   #bg-drift,
   .flare,

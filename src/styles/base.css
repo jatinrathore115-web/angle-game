@@ -24,11 +24,18 @@ body {
   -webkit-touch-callout: none;
 }
 
+/* The stage lives inside the notch-safe area; letterbox bars show a dimmed copy of the
+   space backdrop (set in main.ts after preload) instead of flat black. */
 #viewport {
   position: fixed;
-  inset: 0;
+  top: env(safe-area-inset-top, 0px);
+  right: env(safe-area-inset-right, 0px);
+  bottom: env(safe-area-inset-bottom, 0px);
+  left: env(safe-area-inset-left, 0px);
   overflow: hidden;
-  background: radial-gradient(ellipse at center, #0b1030 0%, #04060f 70%);
+  background-color: #04060f;
+  background-position: center;
+  background-size: cover;
 }
 
 /* Logical 1920x1080 stage, uniformly scaled by ResponsiveStage (letterboxed). */
@@ -84,53 +91,5 @@ kbd {
   text-align: center;
 }
 
-/* ---------- portrait: rotate device ---------- */
-#rotate-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  background: radial-gradient(circle at 50% 40%, #1a1440 0%, #05070f 75%);
-  text-align: center;
-  color: #fff;
-}
-
-#rotate-overlay p {
-  margin: 18px 0 0;
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-}
-
-#rotate-overlay small {
-  opacity: 0.7;
-  font-size: 15px;
-}
-
-.rot-icon {
-  width: 64px;
-  height: 104px;
-  border: 4px solid #ff9a1f;
-  border-radius: 12px;
-  box-shadow: 0 0 22px rgba(255, 138, 0, 0.55);
-  animation: rotHint 2.4s ease-in-out infinite;
-}
-
-@keyframes rotHint {
-  0%, 25% { transform: rotate(0deg); }
-  55%, 85% { transform: rotate(-90deg); }
-  100% { transform: rotate(0deg); }
-}
-
-@media (orientation: portrait) and (max-width: 1024px) {
-  #rotate-overlay {
-    display: flex;
-  }
-  #game-stage {
-    visibility: hidden;
-  }
-}
+/* Portrait touch devices: no blocking "rotate" screen — ResponsiveStage rotates the
+   landscape stage to fill the screen, so the game is playable either way. */
