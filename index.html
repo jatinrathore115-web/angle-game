@@ -34,12 +34,21 @@
   <body>
     <main id="viewport">
       <div id="game-stage" class="in-title" role="application" aria-label="Angle Defense: Meteor Intercept">
-        <!-- 1. supplied background plate (src set after preload) -->
-        <img id="bg" class="layer art" alt="" draggable="false" />
-        <!-- 2-4. live ambience: stars, nebula breathing, glints on the painted orange streak -->
+        <!-- 1-4. supplied background plate + effects registered to it.
+             #bg-parallax: pointer parallax (JS) · #bg-drift: slow cosmic drift (CSS).
+             Everything inside moves together, so glows stay locked onto the painted art. -->
+        <div id="bg-parallax" class="layer" aria-hidden="true">
+          <div id="bg-drift" class="layer">
+            <img id="bg" class="layer art" alt="" draggable="false" />
+            <div id="nebula" class="layer"></div>
+            <svg id="arc-flow" class="layer" viewBox="0 0 1920 1080" preserveAspectRatio="none"></svg>
+            <div id="bg-flares" class="layer"></div>
+          </div>
+        </div>
+        <!-- free-floating depth layers: twinkling stars, drifting dust, shooting stars -->
         <div id="stars" class="layer" aria-hidden="true"></div>
-        <div id="nebula" class="layer" aria-hidden="true"></div>
-        <svg id="arc-flow" class="layer" viewBox="0 0 1920 1080" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div id="dust" class="layer" aria-hidden="true"></div>
+        <div id="shooting" class="layer" aria-hidden="true"></div>
 
         <!-- 5-9. playfield (the only thing camera-shake moves) -->
         <div id="playfield" class="layer">

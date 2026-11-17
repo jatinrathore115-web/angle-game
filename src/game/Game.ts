@@ -580,17 +580,14 @@ export class Game {
         if (m) this.turret.aimAt(m.bearing);
         if (m && !m.entering && this.sm.timeInState > 0.45) {
           this.sm.go('QUESTION_ACTIVE');
-          if (this.levelIndex === 0 && !this.tutorShown) {
-            this.ui.toast('The cannon turns from its <b>reference ray</b> by the angle you pick.', 'info', 3.2);
-          }
         }
         break;
       case 'QUESTION_ACTIVE':
         this.inactivity += dt;
         if (this.inactivity > 3 && this.overlay.targetIntensity < 0.85) this.overlay.targetIntensity = 0.85;
         if (this.levelIndex === 0 && !this.tutorShown && this.inactivity > 6) {
+          // no on-screen tip text: just a brief, silent pulse of the angle diagram
           this.tutorShown = true;
-          this.ui.toast(`Tip: <b class="k">${this.geo!.knownDeg}°</b> and <b class="q">?</b> sit side by side on one straight line.`, 'hint', 3.4);
           this.overlay.emphasis = 0.8;
         }
         if (m && m.reachedCore) this.sm.go('IMPACT_RECOVERY');

@@ -3,35 +3,51 @@ import { mulberry32 } from './LevelBank';
 import type { Quality } from './types';
 
 /**
- * Ambient "live background" built once in the DOM and animated purely by CSS
- * keyframes (transform / opacity), so it costs almost nothing per frame:
- *  - seeded multi-depth starfield with staggered twinkle   (starTwinkle)
- *  - masked radial nebula glows on the painted nebulae      (nebulaBreathe)
- *  - glints flowing along the painted orange streak         (arcEnergyFlow)
- *  - pointer parallax on a foreground glow layer only        (slowParallax)
+ * Live background built once in the DOM. Nearly everything is animated by CSS
+ * keyframes on transform/opacity (compositor-only, ~free per frame):
+ *
+ *  inside #bg-drift (moves WITH the painted plate, so glows stay registered):
+ *   - bgDrift          very slow zoom/pan of the whole plate ("camera breathing")
+ *   - nebulaBreathe    masked radial glows on the painted purple/orange/blue nebulae
+ *   - starFlare        diffraction-cross glints on the painted bright stars
+ *   - arcEnergyFlow    energy glints flowing along the curve of the blue nebula band
+ *  free-floating depth layers:
+ *   - starTwinkle      seeded multi-depth twinkling starfield
+ *   - dustDrift        faint space dust drifting slowly across the view
+ *   - shootingStar     an occasional faint meteor streak (scheduled on game time, so it pauses)
+ *   - pointer parallax deep layer ±4px (plate) vs near layer ±7px (foreground motes)
  */
 
-/** Ridge of the painted orange streak, traced from space-background.png (source px). */
-const STREAK_SRC: [number, number][] = [
-  [85, 385], [110, 420], [150, 466], [230, 514], [310, 555], [430, 603], [550, 643], [670, 679],
-  [790, 711], [910, 733], [1030, 752], [1150, 766], [1300, 779], [1450, 790], [1560, 795],
+const S = (x: number, y: number): [number, number] => [x * ART_SX, y * ART_SY];
+
+/** Ridge of the painted blue nebula band (source px, measured from space-background.png). */
+const BLUE_BAND_SRC: [number, number][] = [
+  [1180, 668], [1260, 618], [1340, 584], [1420, 522], [1470, 497], [1540, 446], [1600, 390], [1660, 322],
 ];
 
-/** Painted nebula hot-spots (source px) with colour + size. */
+/** Painted nebula hot-spots (source px) with colour, radius and breathing period. */
 const NEBULAE: { x: number; y: number; r: number; c: string; dur: number }[] = [
-  { x: 330, y: 135, r: 230, c: '200,60,220', dur: 31 },
-  { x: 850, y: 140, r: 200, c: '255,110,40', dur: 27 },
-  { x: 1005, y: 190, r: 160, c: '255,70,200', dur: 24 },
-  { x: 1240, y: 235, r: 260, c: '255,120,30', dur: 34 },
-  { x: 1540, y: 270, r: 200, c: '210,70,230', dur: 29 },
-  { x: 1220, y: 540, r: 220, c: '50,130,255', dur: 36 },
-  { x: 1470, y: 610, r: 230, c: '40,120,255', dur: 30 },
-  { x: 470, y: 370, r: 140, c: '60,120,255', dur: 26 },
+  { x: 300, y: 120, r: 250, c: '205,60,220', dur: 31 }, // purple, top-left
+  { x: 150, y: 260, r: 170, c: '120,50,210', dur: 27 },
+  { x: 1450, y: 80, r: 210, c: '255,110,30', dur: 25 }, // orange, top-right
+  { x: 1466, y: 497, r: 230, c: '40,120,255', dur: 34 }, // blue band core
+  { x: 1300, y: 600, r: 200, c: '40,110,255', dur: 29 },
+  { x: 1580, y: 380, r: 170, c: '60,140,255', dur: 37 },
+  { x: 180, y: 820, r: 240, c: '110,40,190', dur: 33 }, // purple haze, bottom-left
 ];
 
-export function streakPathD(): string {
-  const p = STREAK_SRC.map(([x, y]) => [x * ART_SX, y * ART_SY]);
-  // Catmull-Rom -> cubic Bezier for a smooth path through every traced point
+/** Painted bright point stars (source px). */
+const FLARES: { x: number; y: number; c: string; size: number }[] = [
+  { x: 151, y: 188, c: '120,180,255', size: 64 },
+  { x: 1204, y: 142, c: '130,190,255', size: 46 },
+  { x: 1538, y: 348, c: '255,160,80', size: 52 },
+  { x: 212, y: 546, c: '255,150,70', size: 50 },
+  { x: 1508, y: 679, c: '110,170,255', size: 46 },
+];
+
+export function bandPathD(): string {
+  const p = BLUE_BAND_SRC.map(([x, y]) => S(x, y));
+  // Catmull-Rom -> cubic Bezier: smooth curve through every traced point
   let d = `M${p[0][0].toFixed(1)},${p[0][1].toFixed(1)}`;
   for (let i = 0; i < p.length - 1; i++) {
     const p0 = p[i - 1] ?? p[i], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2] ?? p2;
@@ -43,56 +59,101 @@ export function streakPathD(): string {
 }
 
 export class SceneRenderer {
-  private parallax: HTMLElement;
+  private parallaxNear: HTMLElement;
+  private parallaxDeep: HTMLElement;
+  private shootingLayer: HTMLElement;
+  private shooters: HTMLElement[] = [];
+  private shooterIdx = 0;
+  private nextShooter = 4;
+  private rng = mulberry32(777);
   private px = 0;
   private py = 0;
   private tx = 0;
   private ty = 0;
 
-  constructor(private stage: HTMLElement, quality: Quality) {
+  constructor(private stage: HTMLElement, private quality: Quality) {
+    this.parallaxNear = stage.querySelector<HTMLElement>('#parallax-glow')!;
+    this.parallaxDeep = stage.querySelector<HTMLElement>('#bg-parallax')!;
+    this.shootingLayer = stage.querySelector<HTMLElement>('#shooting')!;
     this.buildStars(quality);
+    this.buildDust(quality);
     this.buildNebula();
-    this.buildStreak();
-    this.parallax = stage.querySelector<HTMLElement>('#parallax-glow')!;
+    this.buildFlares();
+    this.buildBandFlow();
     this.buildParallax();
+    this.buildShooters();
     stage.ownerDocument.addEventListener('pointermove', this.onPointer, { passive: true });
   }
 
   private onPointer = (e: PointerEvent): void => {
-    const vw = window.innerWidth, vh = window.innerHeight;
-    this.tx = ((e.clientX / vw) * 2 - 1) * 7;
-    this.ty = ((e.clientY / vh) * 2 - 1) * 7;
+    this.tx = (e.clientX / window.innerWidth) * 2 - 1;
+    this.ty = (e.clientY / window.innerHeight) * 2 - 1;
   };
 
-  /** Per-frame: ease the parallax layer toward the pointer (transform only). */
+  /** Per frame (game time — stops while paused): ease parallax, schedule shooting stars. */
   update(dt: number, reduced: boolean): void {
     if (reduced) return;
     const k = Math.min(1, dt * 2.5);
     this.px += (this.tx - this.px) * k;
     this.py += (this.ty - this.py) * k;
-    this.parallax.style.transform = `translate3d(${(-this.px).toFixed(2)}px, ${(-this.py).toFixed(2)}px, 0)`;
+    // near layer moves more than the deep plate -> sense of depth
+    this.parallaxNear.style.transform = `translate3d(${(-this.px * 7).toFixed(2)}px, ${(-this.py * 7).toFixed(2)}px, 0)`;
+    this.parallaxDeep.style.transform = `translate3d(${(-this.px * 4).toFixed(2)}px, ${(-this.py * 4).toFixed(2)}px, 0)`;
+
+    if (this.quality === 'low') return;
+    this.nextShooter -= dt;
+    if (this.nextShooter <= 0) {
+      this.launchShooter();
+      this.nextShooter = 7 + this.rng() * 9;
+    }
   }
 
+  // ------------------------------------------------------------ builders
   private buildStars(quality: Quality): void {
     const host = this.stage.querySelector<HTMLElement>('#stars')!;
     host.textContent = '';
     const rng = mulberry32(1337);
-    const n = quality === 'high' ? 120 : quality === 'medium' ? 80 : 45;
-    const tints = ['#ffffff', '#cfe0ff', '#ffd9b0', '#ffb3e6', '#9fc4ff', '#ffb070'];
+    const n = quality === 'high' ? 130 : quality === 'medium' ? 85 : 45;
+    const tints = ['#ffffff', '#cfe0ff', '#9fc4ff', '#ffd9b0', '#ffb3e6', '#ffb070'];
     const frag = document.createDocumentFragment();
     for (let i = 0; i < n; i++) {
       const s = document.createElement('i');
       const depth = rng();
       const size = depth < 0.6 ? 1 : depth < 0.9 ? 1.6 : 2.6;
-      s.className = 'star' + (rng() < 0.35 ? ' tw' : '');
+      s.className = 'star' + (rng() < 0.38 ? ' tw' : '');
       s.style.left = `${(rng() * STAGE_W).toFixed(1)}px`;
       s.style.top = `${(rng() * STAGE_H).toFixed(1)}px`;
       s.style.width = s.style.height = `${size}px`;
-      s.style.background = tints[rng() < 0.75 ? 0 : 1 + Math.floor(rng() * (tints.length - 1))];
+      s.style.background = tints[rng() < 0.72 ? 0 : 1 + Math.floor(rng() * (tints.length - 1))];
       s.style.setProperty('--o', (0.25 + depth * 0.45).toFixed(2));
       s.style.animationDuration = `${(2.5 + rng() * 4.5).toFixed(2)}s`;
       s.style.animationDelay = `${(-rng() * 7).toFixed(2)}s`;
       frag.appendChild(s);
+    }
+    host.appendChild(frag);
+  }
+
+  private buildDust(quality: Quality): void {
+    const host = this.stage.querySelector<HTMLElement>('#dust')!;
+    host.textContent = '';
+    const rng = mulberry32(4242);
+    const n = quality === 'high' ? 34 : quality === 'medium' ? 20 : 0;
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < n; i++) {
+      const d = document.createElement('i');
+      d.className = 'mote';
+      const size = 1.5 + rng() * 2.5;
+      d.style.left = `${(rng() * STAGE_W).toFixed(1)}px`;
+      d.style.top = `${(rng() * STAGE_H).toFixed(1)}px`;
+      d.style.width = d.style.height = `${size.toFixed(1)}px`;
+      // drift mostly sideways with a gentle rise, like dust in a slow solar wind
+      d.style.setProperty('--dx', `${(-60 - rng() * 140).toFixed(0)}px`);
+      d.style.setProperty('--dy', `${(-20 - rng() * 60).toFixed(0)}px`);
+      d.style.setProperty('--o', (0.15 + rng() * 0.3).toFixed(2));
+      d.style.animationDuration = `${(18 + rng() * 22).toFixed(1)}s`;
+      d.style.animationDelay = `${(-rng() * 40).toFixed(1)}s`;
+      if (rng() < 0.3) d.classList.add('warm');
+      frag.appendChild(d);
     }
     host.appendChild(frag);
   }
@@ -104,24 +165,42 @@ export class SceneRenderer {
       const d = document.createElement('i');
       d.className = 'neb';
       const r = n.r * ART_SX;
-      d.style.left = `${n.x * ART_SX - r}px`;
-      d.style.top = `${n.y * ART_SY - r}px`;
+      const [x, y] = S(n.x, n.y);
+      d.style.left = `${x - r}px`;
+      d.style.top = `${y - r}px`;
       d.style.width = d.style.height = `${r * 2}px`;
-      d.style.background = `radial-gradient(closest-side, rgba(${n.c},0.55), rgba(${n.c},0.18) 55%, rgba(${n.c},0) 100%)`;
+      d.style.background = `radial-gradient(closest-side, rgba(${n.c},0.6), rgba(${n.c},0.2) 55%, rgba(${n.c},0) 100%)`;
       d.style.animationDuration = `${n.dur}s`;
       d.style.animationDelay = `${-i * 4.3}s`;
-      d.style.setProperty('--dx', `${(i % 2 ? 1 : -1) * (4 + (i % 4) * 2)}px`);
-      d.style.setProperty('--dy', `${(i % 3 ? -1 : 1) * (3 + (i % 3) * 2)}px`);
+      d.style.setProperty('--dx', `${(i % 2 ? 1 : -1) * (5 + (i % 4) * 2)}px`);
+      d.style.setProperty('--dy', `${(i % 3 ? -1 : 1) * (4 + (i % 3) * 2)}px`);
       host.appendChild(d);
     });
   }
 
-  private buildStreak(): void {
+  private buildFlares(): void {
+    const host = this.stage.querySelector<HTMLElement>('#bg-flares')!;
+    host.textContent = '';
+    FLARES.forEach((f, i) => {
+      const el = document.createElement('i');
+      el.className = 'flare';
+      const [x, y] = S(f.x, f.y);
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.setProperty('--s', `${f.size}px`);
+      el.style.setProperty('--c', f.c);
+      el.style.animationDuration = `${(4.5 + i * 1.3).toFixed(1)}s`;
+      el.style.animationDelay = `${(-i * 1.7).toFixed(1)}s`;
+      host.appendChild(el);
+    });
+  }
+
+  private buildBandFlow(): void {
     const svg = this.stage.querySelector<SVGSVGElement>('#arc-flow')!;
-    const d = streakPathD();
+    const d = bandPathD();
     svg.innerHTML = `
       <defs>
-        <filter id="glintBlur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.2"/></filter>
+        <filter id="glintBlur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3"/></filter>
       </defs>
       <path class="glint g1" d="${d}" pathLength="1000" filter="url(#glintBlur)"/>
       <path class="glint g2" d="${d}" pathLength="1000"/>
@@ -129,7 +208,7 @@ export class SceneRenderer {
   }
 
   private buildParallax(): void {
-    this.parallax.innerHTML = '';
+    this.parallaxNear.innerHTML = '';
     const rng = mulberry32(99);
     for (let i = 0; i < 18; i++) {
       const s = document.createElement('i');
@@ -137,12 +216,44 @@ export class SceneRenderer {
       s.style.left = `${(rng() * STAGE_W).toFixed(1)}px`;
       s.style.top = `${(rng() * STAGE_H).toFixed(1)}px`;
       s.style.animationDelay = `${(-rng() * 6).toFixed(2)}s`;
-      this.parallax.appendChild(s);
+      this.parallaxNear.appendChild(s);
     }
   }
 
+  private buildShooters(): void {
+    this.shootingLayer.textContent = '';
+    for (let i = 0; i < 2; i++) {
+      const el = document.createElement('i');
+      el.className = 'shooter';
+      el.addEventListener('animationend', () => el.classList.remove('go'));
+      this.shootingLayer.appendChild(el);
+      this.shooters.push(el);
+    }
+  }
+
+  /** A faint streak across the upper sky, kept away from the turret and the answer row. */
+  private launchShooter(): void {
+    const el = this.shooters[this.shooterIdx++ % this.shooters.length];
+    const r = this.rng;
+    const fromLeft = r() < 0.5;
+    const x = fromLeft ? 180 + r() * 700 : 1040 + r() * 700;
+    const y = 110 + r() * 230;
+    const ang = (fromLeft ? 18 + r() * 22 : 180 - 18 - r() * 22);
+    const len = 260 + r() * 260;
+    el.classList.remove('go');
+    el.style.left = `${x.toFixed(0)}px`;
+    el.style.top = `${y.toFixed(0)}px`;
+    el.style.setProperty('--a', `${ang.toFixed(1)}deg`);
+    el.style.setProperty('--len', `${len.toFixed(0)}px`);
+    el.style.animationDuration = `${(0.9 + r() * 0.6).toFixed(2)}s`;
+    void el.offsetWidth;
+    el.classList.add('go');
+  }
+
   rebuildStars(q: Quality): void {
+    this.quality = q;
     this.buildStars(q);
+    this.buildDust(q);
   }
 
   destroy(): void {

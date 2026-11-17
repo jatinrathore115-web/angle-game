@@ -17,7 +17,35 @@
   65% { opacity: var(--o, 0.35); transform: scale(1); }
 }
 
-/* slowParallax: pointer parallax is a JS-eased transform on #parallax-glow (SceneRenderer.update) */
+/* slowParallax: pointer parallax is a JS-eased transform: #bg-parallax ±4px (deep) and #parallax-glow ±7px (near), SceneRenderer.update */
+
+/* the whole painted plate drifts and zooms very slowly; the 1.045 scale keeps edges covered */
+@keyframes bgDrift {
+  0% { transform: scale(1.045) translate3d(-10px, 6px, 0); }
+  50% { transform: scale(1.06) translate3d(6px, -5px, 0); }
+  100% { transform: scale(1.045) translate3d(12px, 4px, 0); }
+}
+
+@keyframes starFlare {
+  0%, 100% { opacity: 0.25; transform: scale(0.75) rotate(0deg); }
+  45% { opacity: 0.55; transform: scale(1) rotate(6deg); }
+  52% { opacity: 0.85; transform: scale(1.18) rotate(8deg); }
+  60% { opacity: 0.5; transform: scale(0.95) rotate(9deg); }
+}
+
+@keyframes dustDrift {
+  0% { opacity: 0; transform: translate3d(0, 0, 0); }
+  15% { opacity: var(--o, 0.3); }
+  85% { opacity: var(--o, 0.3); }
+  100% { opacity: 0; transform: translate3d(var(--dx), var(--dy), 0); }
+}
+
+@keyframes shootingStar {
+  0% { opacity: 0; transform: rotate(var(--a)) translateX(0) scaleX(0.3); }
+  12% { opacity: 0.9; }
+  70% { opacity: 0.6; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(var(--len)) scaleX(1); }
+}
 
 @keyframes arcEnergyFlow {
   from { stroke-dashoffset: 1000; }
@@ -215,6 +243,9 @@
 @media (prefers-reduced-motion: reduce) {
   .star.tw,
   .pstar,
+  #bg-drift,
+  .flare,
+  .mote,
   .neb,
   #arc-flow .glint,
   #frame-glow,
@@ -225,7 +256,9 @@
   .rot-icon {
     animation: none !important;
   }
-  #arc-flow { display: none; }
+  #arc-flow,
+  #dust,
+  #shooting { display: none; }
   .opt.wrong { animation: none; }
   .opt:not(:disabled):hover { transform: none; }
   .fx-debris.play,

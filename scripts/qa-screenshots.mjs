@@ -83,7 +83,7 @@ if (scenario === 'all' || scenario === 'flow') {
     await page.waitForTimeout(900);
     const d = await dbg(page);
     await shot(page, `level-${String(i).padStart(2, '0')}`);
-    console.log('level', d.level, 'answer', d.answer, 'target', d.targetBearing.toFixed(1), 'ref', d.referenceRay.toFixed(1), 'bearingToMeteor', d.bearingToMeteor.toFixed(2));
+    console.log('level', d.level, 'lives', d.lives, 'progress', d.meteor?.progress?.toFixed(2), 'answer', d.answer, 'target', d.targetBearing.toFixed(1), 'ref', d.referenceRay.toFixed(1), 'bearingToMeteor', d.bearingToMeteor.toFixed(2));
     await clickValue(page, d.answer);
     const before = d.explosions;
     await page.waitForFunction((n) => window.__game.debug().explosions > n || window.__game.round.wrongThisRound > 0, before, { timeout: 8000 });

@@ -1,12 +1,18 @@
 /* ============================================================
-   Layer order (spec D): bg → stars → nebula → arc glints →
+   Layer order: background plate group [bg → nebula glows → blue-band glints → star flares]
+   → twinkling stars → drifting dust → shooting stars →
    playfield [world canvas (geometry+meteor) → aura → turret → fx canvas → fx DOM → floats]
-   → parallax glow → supplied frame (+ breathing copy) → HUD/options → toasts → overlays
+   → parallax motes → supplied frame (+ breathing copy) → HUD/options → toasts → overlays
    ============================================================ */
+#bg-parallax { z-index: 0; overflow: hidden; will-change: transform; }
+#bg-drift { will-change: transform; animation: bgDrift 80s ease-in-out infinite alternate; }
 #bg { z-index: 0; }
+#nebula { z-index: 1; mix-blend-mode: screen; }
+#arc-flow { z-index: 2; mix-blend-mode: screen; overflow: visible; }
+#bg-flares { z-index: 3; }
 #stars { z-index: 1; }
-#nebula { z-index: 2; mix-blend-mode: screen; }
-#arc-flow { z-index: 3; mix-blend-mode: screen; overflow: visible; }
+#dust { z-index: 2; }
+#shooting { z-index: 3; }
 #playfield { z-index: 5; will-change: transform; }
 #world-canvas { z-index: 1; }
 #meteor-aura { z-index: 2; }
@@ -52,9 +58,79 @@
   stroke-dasharray: 36 964;
 }
 
-#arc-flow .g1 { stroke: rgba(255, 214, 150, 0.55); stroke-width: 5; animation: arcEnergyFlow 14s linear infinite; }
-#arc-flow .g2 { stroke: rgba(255, 246, 225, 0.6); stroke-width: 1.6; stroke-dasharray: 18 982; animation: arcEnergyFlow 14s linear infinite; }
-#arc-flow .g3 { stroke: rgba(255, 180, 90, 0.35); stroke-width: 4; stroke-dasharray: 60 940; animation: arcEnergyFlow 19s linear infinite -8s; }
+/* energy glints riding the curve of the painted blue nebula band */
+#arc-flow .g1 { stroke: rgba(120, 190, 255, 0.45); stroke-width: 6; stroke-dasharray: 70 930; animation: arcEnergyFlow 16s linear infinite; }
+#arc-flow .g2 { stroke: rgba(225, 240, 255, 0.55); stroke-width: 1.8; stroke-dasharray: 26 974; animation: arcEnergyFlow 16s linear infinite; }
+#arc-flow .g3 { stroke: rgba(90, 150, 255, 0.3); stroke-width: 8; stroke-dasharray: 110 890; animation: arcEnergyFlow 23s linear infinite -11s; }
+
+/* diffraction glints on the painted bright stars */
+.flare {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  mix-blend-mode: screen;
+  opacity: 0.35;
+  animation: starFlare 5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.flare::before,
+.flare::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* horizontal + vertical spikes */
+.flare::before {
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(var(--c), 0), rgba(255, 255, 255, 0.95) 50%, rgba(var(--c), 0));
+  box-shadow: 0 0 6px rgba(var(--c), 0.8);
+}
+
+.flare::after {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, rgba(var(--c), 0), rgba(255, 255, 255, 0.95) 50%, rgba(var(--c), 0));
+  box-shadow: 0 0 6px rgba(var(--c), 0.8), 0 0 0 0 transparent;
+}
+
+/* soft core bloom sits behind the spikes */
+#bg-flares .flare { background: radial-gradient(circle, rgba(var(--c), 0.55) 0%, rgba(var(--c), 0.12) 18%, rgba(var(--c), 0) 34%); }
+
+/* drifting space dust */
+.mote {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(200, 220, 255, 0.9);
+  box-shadow: 0 0 4px rgba(150, 190, 255, 0.7);
+  opacity: 0;
+  animation: dustDrift 30s linear infinite;
+  will-change: transform, opacity;
+}
+
+.mote.warm { background: rgba(255, 210, 170, 0.9); box-shadow: 0 0 4px rgba(255, 160, 90, 0.7); }
+
+/* occasional faint shooting star */
+.shooter {
+  position: absolute;
+  width: 170px;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 2px;
+  transform-origin: 100% 50%;
+  background: linear-gradient(90deg, rgba(150, 190, 255, 0), rgba(190, 215, 255, 0.45) 70%, rgba(255, 255, 255, 0.95));
+  box-shadow: 0 0 6px rgba(160, 200, 255, 0.6);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.shooter.go { animation: shootingStar 1.2s cubic-bezier(0.3, 0.1, 0.6, 1) forwards; }
 
 .pstar {
   position: absolute;
@@ -555,6 +631,10 @@
 
 /* paused: freeze ambient CSS too */
 #game-stage.paused .star,
+#game-stage.paused #bg-drift,
+#game-stage.paused .flare,
+#game-stage.paused .mote,
+#game-stage.paused .shooter,
 #game-stage.paused .neb,
 #game-stage.paused .glint,
 #game-stage.paused .core-glow,
